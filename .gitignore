@@ -1,0 +1,21 @@
+# KHÔNG commit secrets & ảnh đầu ra
+.streamlit/secrets.toml
+outputs/
+usage.json
+
+# Cache Python
+__pycache__/
+*.pyc
+
+# File hệ thống
+.DS_Store
+DS_Store
+
+# KHÔNG commit mọi script bulk_*.py (chứa token hardcode, không cần cho app)
+bulk_*.py
+
+# Thư mục thử nghiệm / kết quả test (không cần đưa lên repo)
+test/
+test_result/
+temp_models/
+*.zip
