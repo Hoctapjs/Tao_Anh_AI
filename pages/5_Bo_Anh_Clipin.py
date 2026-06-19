@@ -107,7 +107,8 @@ if run:
         f"before_{safe_color}.png")
     progress.progress(1/3, text="1/3")
 
-    # --- Bước 2 & 3: dùng chính ảnh Before làm gốc để đồng nhất gương mặt ---
+    # --- Bước 2: After = Before + swatch -> thêm lọn highlight mảnh ---
+    after_data = None
     if before_data:
         after_data = do_step(
             2, "Ảnh After (thêm highlight)",
@@ -117,9 +118,11 @@ if run:
             f"after_{safe_color}.png")
         progress.progress(2/3, text="2/3")
 
+    # --- Bước 3: Lifestyle = dùng chính ảnh After (giữ highlight giống hệt), đổi dáng ---
+    if after_data:
         do_step(
             3, "Ảnh Lifestyle (tạo dáng)",
-            lambda: run_nano_multi([before_data, s_bytes],
+            lambda: run_nano_multi([after_data],
                                    build_clipin_lifestyle_prompt(color_name, hex_color),
                                    "1:1", hi_res),
             f"lifestyle_{safe_color}.png")

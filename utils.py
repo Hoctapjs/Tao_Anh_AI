@@ -327,16 +327,22 @@ def build_clipin_before_prompt(has_model_ref, ethnicity="", gender="", hair_leng
 
 
 def build_clipin_after_prompt(color_name, hex_color):
-    """Ảnh After: giữ y hệt Before, chỉ thêm vài line highlight mảnh từ 3 clip."""
+    """Ảnh After: giữ y hệt Before, thêm lọn clip-in mảnh dọc theo tóc (kiểu trang móc lai)."""
     return (
         f"This is the AFTER photo. Take the SAME woman from the first image (the before photo) and keep "
         f"her face, identity, expression, pose, framing, background, natural hair color, hairstyle, hair "
         f"length and hair thickness EXACTLY the same — do NOT make the hair longer, thicker or fuller, "
         f"and do NOT change her natural hair color. "
-        f"Add ONLY a few thin colored highlight strands from three small clip-in hair extensions, matching "
-        f"the color shown in the second image (the color swatch): {color_name}, hex {hex_color}. "
-        f"The highlight effect must be SUBTLE and NATURAL — just a few slim colored strands framing one "
-        f"side of the hair, NOT a thick block, NOT covering much hair. "
+        f"Weave in a few THIN clip-in colored highlight extension strands matching the color shown in the "
+        f"second image (the color swatch): {color_name}, hex {hex_color}. "
+        f"The colored strands must run as long continuous vertical highlight streaks that flow DOWN ALONG "
+        f"the natural hair, starting from near the crown/upper hair and continuing smoothly all the way "
+        f"down to the very ends of the hair, blended naturally between the dark strands — exactly like real "
+        f"clip-in hair extensions, NOT a short patch, NOT a blob, NOT a curved swirl, NOT concentrated in "
+        f"one spot. Place them on one side of the hair, framing the face. "
+        f"Keep them SUBTLE and SPARSE — just a few slim straight strands, not a thick block, not covering "
+        f"much hair. The colored strands must be the SAME straight smooth texture and length as the "
+        f"surrounding natural hair. "
         f"Match the exact hue, saturation and brightness of {hex_color}. "
         f"Photorealistic, natural look, sharp. Square 1:1 framing. "
         f"EXACTLY ONE person, the same person as the first image, clean single portrait. "
@@ -345,18 +351,20 @@ def build_clipin_after_prompt(color_name, hex_color):
 
 
 def build_clipin_lifestyle_prompt(color_name, hex_color):
-    """Ảnh Lifestyle: model tạo dáng tự nhiên, phong cách Luxy Hair."""
+    """Ảnh Lifestyle: dùng ảnh After làm gốc, đổi sang dáng tạo kiểu, giữ nguyên highlight."""
     return (
-        f"A lifestyle fashion photo of the SAME woman from the first image, keeping her face and identity "
-        f"identical. She is posing naturally and elegantly, one hand gently touching or holding her hair "
-        f"to show off the colored highlight strands, with a relaxed confident expression. "
-        f"Her hair keeps its natural color, length and thickness, with the same few thin clip-in colored "
-        f"highlight strands matching the second image swatch: {color_name}, hex {hex_color} — subtle and "
-        f"natural, just a few slim strands, not a thick block. "
+        f"A lifestyle fashion photo of the SAME woman from the first image, keeping her face, identity, "
+        f"natural hair color, hair length and thickness identical. "
+        f"Keep the EXACT same thin colored clip-in highlight strands that are already in the first image "
+        f"(color {color_name}, hex {hex_color}) — same position, same amount, same subtle thin look. "
+        f"Do NOT add more colored strands, do NOT make them thicker, do NOT change the hair. "
+        f"Change ONLY her pose: she now poses naturally and elegantly, turning slightly, with one hand "
+        f"gently holding a section of her hair to show off the colored highlight strands, relaxed "
+        f"confident expression. "
         f"Premium editorial lifestyle style inspired by Luxy Hair: clean, bright, high-end and fashionable, "
         f"soft natural lighting, simple elegant background. Photorealistic, sharp, realistic. "
         f"Square 1:1 framing. EXACTLY ONE person, the same person as the first image. "
-        f"Do NOT include the swatch, borders, panels or a side-by-side/collage in the output."
+        f"Do NOT include any swatch, borders, panels or a side-by-side/collage in the output."
     )
 
 
