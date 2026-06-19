@@ -176,13 +176,12 @@ def build_nano_highlight_prompt(color_name, hex_color, density="thin", with_swat
 
     if density == "thin":
         density_rule = (
-            f"IMPORTANT — keep the colored strands MINIMAL and THIN: render them as a few slim, sparse "
-            f"accent strands. Do NOT widen, thicken, expand, multiply or duplicate the colored strands, "
-            f"and do NOT let the color bleed into the surrounding natural hair. "
-            f"Reduce the colored coverage, especially near the crown, the part line and the top of the "
-            f"head — most of the hair there must stay its natural color, with only a few thin colored "
-            f"strands showing. The overall amount of colored hair should look lighter and more delicate "
-            f"than a thick block of color. "
+            f"IMPORTANT — keep the colored highlight VERY THIN and delicate: make the colored area "
+            f"NOTICEABLY NARROWER than it currently is — roughly half the width — just a slim ribbon, "
+            f"not a wide band. Do NOT widen, thicken, expand, multiply or duplicate the colored strands. "
+            f"The vast majority of the hair must stay natural blonde; only a thin sliver shows color. "
+            f"The overall amount of colored hair should look light, subtle and delicate, never a thick "
+            f"block of color. "
         )
     else:
         density_rule = (
@@ -232,14 +231,14 @@ def build_nano_highlight_prompt(color_name, hex_color, density="thin", with_swat
         f"PLACEMENT: keep the colored highlight ONLY in the front, face-framing section of hair that falls "
         f"over the shoulder and is fully facing the camera. Remove any colored strands on the back of the "
         f"head or on hair sections turned away/behind — those areas stay fully natural blonde. "
-        f"WOVEN 'highlight' STYLE: the colored strand must NOT be one solid uninterrupted band of color. "
-        f"Run several distinct strands of natural blonde hair DOWN THROUGH THE MIDDLE of the colored section "
-        f"— blonde fibers threading vertically inside and across the colored strand, breaking it into a few "
-        f"finer colored ribbons separated by visible blonde hair, so colored and blonde weave in and out "
-        f"together along the whole length. There should be clear blonde streaks running through the green, "
-        f"not just at the edges but inside the strand itself, creating a realistic interlaced highlight. "
-        f"Keep the current color and translucency, just add MORE blonde threading through the middle. "
-        f"Keep it interwoven yet still clearly bold and eye-catching. "
+        f"WOVEN 'highlight' STYLE: the colored strand must absolutely NOT be one solid uninterrupted band. "
+        f"Heavily INTERLACE it with natural blonde hair — run MANY distinct blonde strands down through the "
+        f"middle and across the whole colored section, so it breaks into several thin colored wisps "
+        f"separated by plenty of visible blonde hair woven between them. There should be MORE blonde "
+        f"threading through than before: blonde and colored fibers alternate constantly along the entire "
+        f"length, top to bottom, so you clearly see blonde streaks running inside the colored area, not just "
+        f"at the edges. The effect is a finely interlaced balayage-style highlight, airy and broken up, "
+        f"NOT a filled block. Keep it interwoven and delicate yet the color still clearly visible. "
         f"{density_rule}"
         f"Keep the person's OWN natural hair color exactly as in the first image (for example keep blonde "
         f"hair blonde, brown hair brown — do NOT darken or change it), and keep the face, skin, facial "
