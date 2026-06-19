@@ -5,7 +5,7 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS, SIGNBOARD_SIZES, SIGNBOARD_STYLES,
+    MAX_GENERATIONS, SIGNBOARD_SIZES, SIGNBOARD_STYLES, SIGNBOARD_LOOKS,
     build_signboard_prompt, run_signboard_model,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
 )
@@ -34,7 +34,10 @@ with col1:
 with col2:
     st.subheader("2️⃣ Kích thước & phong cách")
     size_label  = st.selectbox("Kích thước bảng hiệu", list(SIGNBOARD_SIZES.keys()))
-    style_label = st.selectbox("Phong cách thiết kế", list(SIGNBOARD_STYLES.keys()))
+    look_label  = st.selectbox("Loại hình ảnh", list(SIGNBOARD_LOOKS.keys()),
+                               help="Minh họa: tranh vector hoạt hình. "
+                                    "Hình ảnh tự nhiên: ảnh chụp thật của sản phẩm.")
+    style_label = st.selectbox("Phong cách màu sắc", list(SIGNBOARD_STYLES.keys()))
     n_variants  = st.slider("Số mẫu tạo ra", 1, 4, 2,
                             help="Mỗi mẫu là 1 phương án thiết kế khác nhau, tốn 1 lượt/mẫu.")
 
@@ -66,7 +69,7 @@ if run:
 
     prompt = build_signboard_prompt(
         shop_name.strip(), business.strip(), contact.strip(),
-        slogan.strip(), style_label, extra.strip())
+        slogan.strip(), style_label, look_label, extra.strip())
 
     safe_name = shop_name.strip().replace(" ", "-")
     progress  = st.progress(0.0, text=f"0/{total}")

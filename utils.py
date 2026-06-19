@@ -300,18 +300,32 @@ SIGNBOARD_SIZES = {
 
 # Phong cách phổ thông cho bảng hiệu cửa hàng VN
 SIGNBOARD_STYLES = {
-    "Hiện đại tối giản":   "modern minimalist flat design, clean sans-serif typography, bold solid color background",
+    "Hiện đại tối giản":   "modern minimalist look, clean sans-serif typography, bold solid color background",
     "Truyền thống VN":     "traditional Vietnamese shop sign style, warm red and yellow colors, classic bold typography",
     "Sang trọng cao cấp":  "elegant premium look, gold and dark colors, refined serif typography, luxury feel",
-    "Tươi sáng bắt mắt":   "bright eye-catching colors, vibrant and friendly, high contrast, playful but clean",
+    "Tươi sáng bắt mắt":   "bright eye-catching colors, vibrant and friendly, high contrast, clean",
     "Ẩm thực / quán ăn":   "appetizing food-business style, warm inviting colors, friendly rounded typography",
     "Cà phê / trà sữa":    "trendy cafe and milk-tea style, cozy modern colors, stylish lettering",
 }
 
+# Loại hình ảnh nền/họa tiết
+SIGNBOARD_LOOKS = {
+    "Minh họa (vector)": (
+        "flat 2D vector illustration style, hand-drawn cartoon graphic elements, "
+        "clean illustrated icons and decorations, like a Canva poster"
+    ),
+    "Hình ảnh tự nhiên": (
+        "realistic photographic background and elements, real product photography, "
+        "natural photo-realistic look with real photos of the products/food/drinks, "
+        "NOT a cartoon, NOT a flat vector illustration"
+    ),
+}
+
 
 def build_signboard_prompt(shop_name, business, contact, slogan,
-                           style_label, extra=""):
+                           style_label, look_label="Minh họa (vector)", extra=""):
     style = SIGNBOARD_STYLES.get(style_label, style_label)
+    look  = SIGNBOARD_LOOKS.get(look_label, look_label)
 
     lines = [f'  - SHOP NAME (largest, focal point): "{shop_name}"']
     if business:
@@ -325,9 +339,10 @@ def build_signboard_prompt(shop_name, business, contact, slogan,
     extra_part = f" Additional details: {extra.strip()}." if extra and extra.strip() else ""
 
     return (
-        f"A flat 2D graphic design of an advertising poster / banner for a Vietnamese shop. "
-        f"This is a print-ready poster artwork, NOT a photo. "
-        f"Style: {style}. "
+        f"An advertising poster / banner design for a Vietnamese shop, print-ready, "
+        f"the design fills the entire frame edge to edge. "
+        f"Visual look: {look}. "
+        f"Color & mood style: {style}. "
         f"The poster must display EXACTLY the following Vietnamese text, each on its own line:\n"
         f"{text_block}\n"
         f"VIETNAMESE TEXT RULES (very important): The text is in the Vietnamese language and uses "
@@ -344,12 +359,12 @@ def build_signboard_prompt(shop_name, business, contact, slogan,
         f"palette (2-3 main colors); generous margins and balanced spacing; legible typography; "
         f"a small simple icon or logo mark relevant to the business if suitable.{extra_part} "
         f"The text must be sharp, perfectly legible and correctly spelled with all Vietnamese accents. "
-        f"IMPORTANT: Output ONLY the flat poster artwork that fills the entire frame edge to edge, "
-        f"as a clean digital design file. Do NOT show the poster hanging on a wall, on a building, on a "
-        f"storefront, on a stand, on a mockup, or held by a person. No 3D perspective, no shadows of a "
-        f"physical object, no surrounding environment, no street scene — just the flat front-facing "
-        f"design itself, like an exported graphic design / Canva poster. "
-        f"High resolution, professional graphic design, commercial quality."
+        f"IMPORTANT: Output ONLY the poster design itself, filling the entire frame edge to edge, "
+        f"as a clean exported design file. Do NOT show the poster hanging on a wall, on a building, on a "
+        f"storefront, on a stand, on a mockup, or held by a person. Do NOT add an outer border, frame, "
+        f"margin or background around the poster. No surrounding environment, no street scene, "
+        f"no perspective tilt — just the flat front-facing poster filling the whole image. "
+        f"High resolution, professional design, commercial quality."
     )
 
 
