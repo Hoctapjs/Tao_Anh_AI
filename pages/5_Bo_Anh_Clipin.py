@@ -17,8 +17,8 @@ used, remaining = render_quota_bar()
 
 st.title("📸 Bộ ảnh Highlight Clip-In")
 st.caption("Upload 1 ảnh template (model đã gắn clip thật) + swatch màu. App sẽ recolor lọn "
-           "sang màu swatch + đổi sang gương mặt mới, rồi tạo bộ 3 ảnh đồng nhất: "
-           "Before → After → Lifestyle (1:1).")
+           "sang màu swatch + đổi sang gương mặt mới. Chọn ảnh cần tạo: "
+           "After / Before / Lifestyle (1:1).")
 
 st.divider()
 
@@ -51,13 +51,30 @@ with col2:
     with cc2:
         gender = st.selectbox("Giới tính", ["Nữ", "Nam"], disabled=not change_face)
 
+    st.subheader("4️⃣ Chọn ảnh cần tạo")
+    want_after     = st.checkbox("Ảnh After (có lọn màu)", value=True)
+    want_before    = st.checkbox("Ảnh Before (tóc tự nhiên)", value=True)
+    want_lifestyle = st.checkbox("Ảnh Lifestyle (tạo dáng)", value=True)
+
     hi_res = st.toggle("Xuất 4K siêu nét", value=False,
                        help="Ảnh độ phân giải cao (lâu hơn một chút).")
-    cost = 4 if change_face else 3
-    st.caption(f"⚠️ Bộ này tốn **{cost} lượt** "
-               f"({'đổi mặt + recolor + before + lifestyle' if change_face else 'recolor + before + lifestyle'}).")
 
-run = st.button("🚀 Tạo bộ 3 ảnh", type="primary",
+# Tính số lượt cần (theo dependency: Lifestyle cần After; faceswap dùng chung)
+need_after_gen = want_after or want_lifestyle
+any_selected   = want_after or want_before or want_lifestyle
+cost = 0
+if change_face and any_selected:
+    cost += 1                      # faceswap
+if need_after_gen:
+    cost += 1                      # After (recolor)
+if want_before:
+    cost += 1                      # Before
+if want_lifestyle:
+    cost += 1                      # Lifestyle
+with col2:
+    st.caption(f"⚠️ Lựa chọn hiện tại tốn **{cost} lượt**.")
+
+run = st.button("🚀 Tạo ảnh", type="primary",
                 use_container_width=True, disabled=(remaining == 0))
 
 if run:
@@ -69,6 +86,9 @@ if run:
         st.stop()
     if not swatch_file:
         st.error("Cần ảnh swatch màu highlight.")
+        st.stop()
+    if not any_selected:
+        st.error("Chọn ít nhất 1 ảnh cần tạo (After / Before / Lifestyle).")
         st.stop()
     if remaining < 1:
         st.error("🚫 Đã hết lượt tạo.")
@@ -118,29 +138,27 @@ if run:
             "_swap", "Đổi gương mặt (giữ lọn gốc)",
             lambda: run_nano_multi([t_bytes],
                                    build_clipin_faceswap(ethnicity, gender), "1:1", hi_res))
-        if swapped:
-            base_bytes = swapped
-        else:
-            base_bytes = None
+        base_bytes = swapped  # None nếu lỗi
 
-    # --- After: recolor lọn bằng đúng cách trang móc lai ---
+    # --- After: recolor lọn bằng đúng cách trang móc lai (chỉ khi cần) ---
     after_data = None
-    if base_bytes is not None:
+    if base_bytes is not None and need_after_gen:
         after_data = do_step(
             "after", "Ảnh After (recolor lọn)",
             lambda: run_nano_multi([base_bytes, s_bytes],
                                    build_nano_highlight_prompt(color_name, hex_color, "normal"),
                                    "1:1", hi_res),
-            f"after_{safe_color}.png")
+            f"after_{safe_color}.png" if want_after else None)
 
-    # --- Before = After -> bỏ hết lọn màu (giữ mặt/dáng) ---
-    if after_data:
+    # --- Before = base -> bỏ hết lọn màu (không phụ thuộc After) ---
+    if base_bytes is not None and want_before:
         do_step(
             "before", "Ảnh Before (bỏ lọn màu)",
-            lambda: run_nano_multi([after_data], build_clipin_before_from_after(), "1:1", hi_res),
+            lambda: run_nano_multi([base_bytes], build_clipin_before_from_after(), "1:1", hi_res),
             f"before_{safe_color}.png")
 
-        # --- Lifestyle = After -> đổi dáng (giữ mặt + lọn) ---
+    # --- Lifestyle = After -> đổi dáng (giữ mặt + lọn) ---
+    if after_data is not None and want_lifestyle:
         do_step(
             "lifestyle", "Ảnh Lifestyle (tạo dáng)",
             lambda: run_nano_multi([after_data],
@@ -149,7 +167,8 @@ if run:
             f"lifestyle_{safe_color}.png")
 
     progress.empty()
-    st.success(f"Hoàn thành! Tạo được {len(results)}/3 ảnh. Còn {remaining} lượt.")
+    n_want = sum([want_after, want_before, want_lifestyle])
+    st.success(f"Hoàn thành! Tạo được {len(results)}/{n_want} ảnh. Còn {remaining} lượt.")
 
     # Hiển thị theo thứ tự logic: Before -> After -> Lifestyle
     ordered = [results[k] for k in ("before", "after", "lifestyle") if k in results]
