@@ -135,9 +135,10 @@ if run:
     base_bytes = t_bytes
     if change_face:
         swapped = do_step(
-            "_swap", "Đổi gương mặt (giữ lọn gốc)",
+            "swap", "Đổi gương mặt (giữ lọn gốc)",
             lambda: run_nano_multi([t_bytes],
-                                   build_clipin_faceswap(ethnicity, gender), "1:1", hi_res))
+                                   build_clipin_faceswap(ethnicity, gender), "1:1", hi_res),
+            f"doimat_goc_{safe_color}.png")
         base_bytes = swapped  # None nếu lỗi
 
     # --- After: recolor lọn bằng đúng cách trang móc lai (chỉ khi cần) ---
@@ -167,11 +168,10 @@ if run:
             f"lifestyle_{safe_color}.png")
 
     progress.empty()
-    n_want = sum([want_after, want_before, want_lifestyle])
-    st.success(f"Hoàn thành! Tạo được {len(results)}/{n_want} ảnh. Còn {remaining} lượt.")
+    st.success(f"Hoàn thành! Tạo được {len(results)} ảnh. Còn {remaining} lượt.")
 
-    # Hiển thị theo thứ tự logic: Before -> After -> Lifestyle
-    ordered = [results[k] for k in ("before", "after", "lifestyle") if k in results]
+    # Hiển thị theo thứ tự: Đổi mặt (gốc) -> Before -> After -> Lifestyle
+    ordered = [results[k] for k in ("swap", "before", "after", "lifestyle") if k in results]
     if ordered:
         st.divider()
         cols = st.columns(3)
