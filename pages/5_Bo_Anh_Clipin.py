@@ -134,8 +134,10 @@ def run_rest(after_base, before_tmpl, identity_ref, s_bytes,
 
     if before_tmpl is not None and want_before:
         match = change_face and identity_ref is not None
-        # ảnh 1 = doimat_goc (face source), ảnh 2 = before_tmpl (pose ref)
-        imgs = [identity_ref, before_tmpl] if match else [before_tmpl]
+        # ảnh 1 = after (face+outfit đã confirm), ảnh 2 = before_tmpl (pose ref)
+        # fallback về identity_ref nếu after chưa được tạo
+        face_src = after_data if after_data is not None else identity_ref
+        imgs = [face_src, before_tmpl] if match else [before_tmpl]
         b = gen_step("Ảnh Before (tóc tự nhiên)",
                      lambda: run_nano_multi(imgs,
                                             build_clipin_before(clothing_en, match),
