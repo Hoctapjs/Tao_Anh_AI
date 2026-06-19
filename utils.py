@@ -18,8 +18,8 @@ MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
 MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
 MODEL_SIGNBOARD      = "ideogram-ai/ideogram-v3-quality"
 
-MAX_GENERATIONS = 50
-INITIAL_USED    = 16
+MAX_GENERATIONS = 30
+INITIAL_USED    = 0
 USAGE_FILE      = "usage.json"
 
 
