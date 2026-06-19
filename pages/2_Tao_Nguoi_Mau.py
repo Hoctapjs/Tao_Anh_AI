@@ -5,7 +5,7 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS,
+    MAX_GENERATIONS, MODEL_TEXT2IMG, MODEL_TEXT2IMG_ULTRA,
     color_name_from_filename, extract_dominant_color,
     label_from_filename, run_text2img_model, build_text2img_prompt,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
@@ -36,6 +36,14 @@ with col2:
     ethnicity   = st.selectbox("Chủng tộc",  ["Da trắng", "Châu Á", "Da đen"])
     gender      = st.selectbox("Giới tính",  ["Nữ", "Nam"])
     hair_length = st.selectbox("Độ dài tóc", ["Dài", "Trung bình", "Ngắn"])
+
+    quality = st.radio(
+        "Chất lượng ảnh",
+        options=["Tiêu chuẩn", "Chất lượng cao"],
+        horizontal=True,
+        help="Chất lượng cao cho ảnh sắc nét, chi tiết hơn — tốn 2 lượt/ảnh.",
+    )
+    selected_model = MODEL_TEXT2IMG_ULTRA if quality == "Chất lượng cao" else MODEL_TEXT2IMG
 
     # Action presets phổ biến cho chụp ảnh demo tóc giả
     ACTION_PRESETS = {
@@ -116,7 +124,7 @@ if run:
         with st.status(f"[{i}/{total}] Tạo người mẫu tóc {color_name} ({hex_color})",
                        expanded=False) as status:
             try:
-                data = run_with_retry(lambda: run_text2img_model(prompt))
+                data = run_with_retry(lambda: run_text2img_model(prompt, selected_model))
                 used      += 1
                 remaining  = MAX_GENERATIONS - used
                 save_used(used)

@@ -11,7 +11,8 @@ from PIL import Image
 # ====== CONSTANTS ======
 MODEL_MULTI    = "flux-kontext-apps/multi-image-kontext-pro"
 MODEL_SINGLE   = "black-forest-labs/flux-kontext-pro"
-MODEL_TEXT2IMG = "black-forest-labs/flux-1.1-pro"
+MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
+MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
 
 MAX_GENERATIONS = 50
 INITIAL_USED    = 16
@@ -180,7 +181,9 @@ def run_with_retry(fn, max_retries=3, wait_seconds=12):
     raise last_err
 
 
-def run_text2img_model(prompt):
+def run_text2img_model(prompt, model=None):
+    if model is None:
+        model = MODEL_TEXT2IMG
     negative_prompt = (
         "dark roots, darker roots, shadow at roots, root shadow, visible roots, "
         "two-tone hair, ombre hair, ombre roots, natural roots, regrowth, "
@@ -194,7 +197,7 @@ def run_text2img_model(prompt):
         "aspect_ratio": "2:3",
         "output_format": "png",
     }
-    return output_to_bytes(replicate.run(MODEL_TEXT2IMG, input=inp))
+    return output_to_bytes(replicate.run(model, input=inp))
 
 
 # ====== SHARED UI COMPONENTS ======
