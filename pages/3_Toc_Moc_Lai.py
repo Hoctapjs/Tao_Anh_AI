@@ -14,43 +14,33 @@ from utils import (
 token, _, _ = render_sidebar()
 used, remaining = render_quota_bar()
 
-st.title("🌈 Tóc móc lai (highlight)")
-st.caption("Upload ảnh người mẫu + ảnh swatch màu. App sẽ thêm vài lọn tóc móc lai "
-           "đúng màu swatch vào mái tóc, giữ nguyên phần tóc gốc và khuôn mặt.")
+st.title("🌈 Đổi màu tóc móc lai")
+st.caption("Upload ảnh người mẫu (đã có sẵn lọn móc lai màu) + ảnh swatch màu mới. "
+           "App sẽ nhận diện các lọn móc lai có sẵn và đổi sang đúng màu swatch, "
+           "giữ nguyên tóc tự nhiên và khuôn mặt.")
 
 st.divider()
 
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("1️⃣ Ảnh người mẫu")
-    model_files = st.file_uploader("Ảnh người mẫu (có thể chọn nhiều)",
+    st.subheader("1️⃣ Ảnh người mẫu (có lọn móc lai)")
+    model_files = st.file_uploader("Ảnh người mẫu đã có lọn móc lai màu (có thể chọn nhiều)",
                                    type=["png", "jpg", "jpeg", "webp"],
                                    accept_multiple_files=True, key="hl_models")
     if model_files:
         st.image([f.getvalue() for f in model_files], width=110)
 
 with col2:
-    st.subheader("2️⃣ Ảnh mẫu màu tóc")
+    st.subheader("2️⃣ Ảnh mẫu màu tóc mới")
     swatch_files = st.file_uploader("Swatch màu tóc (đặt tên kiểu 2-blue.png)",
                                     type=["png", "jpg", "jpeg", "webp"],
                                     accept_multiple_files=True, key="hl_swatches")
     if swatch_files:
         st.image([f.getvalue() for f in swatch_files], width=110)
 
-st.subheader("3️⃣ Kiểu móc lai")
-o1, o2, o3 = st.columns(3)
-with o1:
-    placement = st.selectbox(
-        "Vị trí lọn",
-        ["Hai bên khung mặt", "Một bên", "Lọn ẩn dưới lớp tóc", "Rải đều khắp tóc"])
-with o2:
-    amount = st.selectbox(
-        "Số lượng lọn",
-        ["Vừa (3-5 lọn)", "Ít (1-2 lọn)", "Nhiều (nhiều lọn)"])
-with o3:
-    hi_res = st.toggle(
-        "Xuất 4K siêu nét", value=False,
-        help="Bật: ảnh độ phân giải cao cho quảng bá (lâu hơn một chút).")
+hi_res = st.toggle(
+    "Xuất 4K siêu nét", value=False,
+    help="Bật: ảnh độ phân giải cao cho quảng bá (lâu hơn một chút).")
 
 if model_files and swatch_files:
     total = len(model_files) * len(swatch_files)
@@ -94,7 +84,7 @@ if run:
         label      = label_from_filename(m_file.name)
         safe_color = color_name.replace(" ", "-")
         out_name   = f"{label}_moclai_{safe_color}.png"
-        prompt     = build_nano_highlight_prompt(color_name, hex_color, placement, amount)
+        prompt     = build_nano_highlight_prompt(color_name, hex_color)
         run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_nano_banana(mb, sb, p, hi_res)
 
         with st.status(f"[{i}/{total}] {label} + móc lai {color_name} ({hex_color})",

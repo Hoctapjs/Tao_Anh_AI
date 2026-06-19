@@ -180,32 +180,20 @@ def build_nano_prompt(color_name, hex_color):
     )
 
 
-def build_nano_highlight_prompt(color_name, hex_color, placement="", amount=""):
-    placement_map = {
-        "Hai bên khung mặt": "as face-framing strands on both sides, next to the face",
-        "Một bên": "as a few strands on one side of the head",
-        "Lọn ẩn dưới lớp tóc": "as peekaboo strands hidden under the top layer of hair, "
-                               "visible when the hair moves",
-        "Rải đều khắp tóc": "as several thin streaks spread evenly throughout the hair",
-    }
-    amount_map = {
-        "Ít (1-2 lọn)": "just 1 to 2 thin strands",
-        "Vừa (3-5 lọn)": "about 3 to 5 strands",
-        "Nhiều (nhiều lọn)": "many strands",
-    }
-    place = placement_map.get(placement, "as a few face-framing strands")
-    amt   = amount_map.get(amount, "a few strands")
-
+def build_nano_highlight_prompt(color_name, hex_color):
     return (
-        f"Add clip-in colored hair extension highlights to the person in the first image. "
-        f"Weave in {amt} of NEW colored hair {place}, blended naturally into her existing hair. "
-        f"These added highlight strands must be EXACTLY the color shown in the second image "
-        f"(the color swatch): {color_name}, hex {hex_color}. The whole length of each added strand, "
-        f"from where it attaches near the scalp down to the tip, must be this exact uniform color. "
-        f"Keep ALL of her original hair color, face, skin, facial features, expression, pose, framing "
-        f"and background completely unchanged — only ADD the colored highlight strands on top. "
-        f"The result should look like real clip-in colored hair extensions for a wig brand product photo. "
-        f"Photorealistic, natural blending, high detail. Output a single portrait of this one person."
+        f"In the first image, the person already has brightly colored clip-in hair extension strands "
+        f"(unnatural dyed color, e.g. blue/green/pink) woven into their natural dark hair. "
+        f"Identify ALL of these colored extension strands — find every strand that is NOT a natural "
+        f"hair color. Recolor ONLY those existing colored extension strands so they EXACTLY match the "
+        f"color shown in the second image (the color swatch): {color_name}, hex {hex_color}. "
+        f"The entire length of each colored strand, from where it clips near the scalp down to the very "
+        f"tip, must become this exact uniform color {hex_color}. "
+        f"Keep the EXACT same strands in the EXACT same position, shape, length and amount as in the "
+        f"first image — do NOT add, remove, move or reshape any strand; only change their color. "
+        f"Keep the person's natural (dark) hair color, face, skin, facial features, expression, pose, "
+        f"framing and background completely unchanged. Do NOT recolor the natural hair. "
+        f"Photorealistic, high detail. Output a single portrait of this one person."
     )
 
 

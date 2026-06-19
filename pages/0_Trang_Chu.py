@@ -38,15 +38,15 @@ AI sẽ tự sinh ra người mẫu hoàn toàn mới với màu tóc, chủng t
     st.page_link("pages/2_Tao_Nguoi_Mau.py", label="Đến trang Tạo người mẫu mới →", icon="🧑")
 
 with c3:
-    st.markdown("### 🌈 Tóc móc lai")
+    st.markdown("### 🌈 Đổi màu tóc móc lai")
     st.markdown("""
-Upload **ảnh người mẫu** + **ảnh swatch màu**.
+Upload **ảnh người mẫu đã có lọn móc lai** + **ảnh swatch màu mới**.
 
-AI sẽ thêm vài lọn tóc móc lai (highlight) đúng màu swatch vào mái tóc, giữ nguyên tóc gốc và khuôn mặt.
+AI sẽ nhận diện các lọn móc lai có sẵn và đổi sang đúng màu swatch, giữ nguyên tóc tự nhiên và khuôn mặt.
 
-**Phù hợp khi:** bạn muốn quảng bá tóc kẹp móc lai nhiều màu trên người mẫu có sẵn.
+**Phù hợp khi:** bạn có 1 ảnh mẫu móc lai và muốn nhân ra nhiều phiên bản màu khác nhau.
     """)
-    st.page_link("pages/3_Toc_Moc_Lai.py", label="Đến trang Tóc móc lai →", icon="🌈")
+    st.page_link("pages/3_Toc_Moc_Lai.py", label="Đến trang Đổi màu tóc móc lai →", icon="🌈")
 
 st.divider()
 st.caption("Quota 50 lần dùng chung cho cả 3 tính năng.")
