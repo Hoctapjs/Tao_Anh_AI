@@ -5,10 +5,10 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS,
+    MAX_GENERATIONS, CLOTHING_COLORS,
     color_name_from_filename, extract_dominant_color,
     run_nano_multi, build_clipin_faceswap, build_nano_highlight_prompt,
-    build_clipin_before_from_after, build_clipin_lifestyle_from_after,
+    build_clipin_before, build_clipin_lifestyle_from_after,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
 )
 
@@ -16,34 +16,40 @@ token, _, _ = render_sidebar()
 used, remaining = render_quota_bar()
 
 st.title("📸 Bộ ảnh Highlight Clip-In")
-st.caption("Upload 1 ảnh template (model đã gắn clip thật) + swatch màu. App sẽ recolor lọn "
-           "sang màu swatch + đổi sang gương mặt mới. Chọn ảnh cần tạo: "
-           "After / Before / Lifestyle (1:1).")
+st.caption("Upload template Before (tóc tự nhiên) + template After (đã gắn clip) + swatch. "
+           "App đổi sang 1 gương mặt mới (khác hẳn) dùng chung cho cả bộ, recolor lọn theo swatch, "
+           "đổi màu áo, biểu cảm Before nhẹ nhàng / After tự tin. Ảnh 1:1.")
 
 st.divider()
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("1️⃣ Ảnh template (model gắn clip)")
-    template_file = st.file_uploader(
-        "Ảnh model đã gắn clip highlight thật (dùng làm khuôn)",
-        type=["png", "jpg", "jpeg", "webp"], key="ci_template")
-    if template_file:
-        st.image(template_file.getvalue(), width=160)
-        st.caption("Sẽ giữ kiểu tóc, vị trí lọn & dáng của ảnh này; chỉ đổi màu lọn + gương mặt.")
+    st.subheader("1️⃣ Template Before (tóc tự nhiên)")
+    before_tmpl_file = st.file_uploader(
+        "Ảnh model tóc tự nhiên, chưa gắn clip — lấy dáng/bố cục cho ảnh Before",
+        type=["png", "jpg", "jpeg", "webp"], key="ci_before_tmpl")
+    if before_tmpl_file:
+        st.image(before_tmpl_file.getvalue(), width=140)
 
-with col2:
-    st.subheader("2️⃣ Ảnh mẫu màu highlight")
+    st.subheader("2️⃣ Template After (đã gắn clip)")
+    after_tmpl_file = st.file_uploader(
+        "Ảnh model đã gắn clip highlight thật — lấy dáng/lọn cho ảnh After",
+        type=["png", "jpg", "jpeg", "webp"], key="ci_after_tmpl")
+    if after_tmpl_file:
+        st.image(after_tmpl_file.getvalue(), width=140)
+
+    st.subheader("3️⃣ Swatch màu highlight")
     swatch_file = st.file_uploader(
         "Swatch màu (đặt tên kiểu 2-pink.png)",
         type=["png", "jpg", "jpeg", "webp"], key="ci_swatch")
     if swatch_file:
-        st.image(swatch_file.getvalue(), width=160)
+        st.image(swatch_file.getvalue(), width=140)
 
-    st.subheader("3️⃣ Gương mặt model mới")
-    change_face = st.toggle("Đổi sang gương mặt mới", value=True,
-                            help="Tắt: giữ nguyên mặt template, chỉ đổi màu lọn.")
+with col2:
+    st.subheader("4️⃣ Gương mặt & trang phục")
+    change_face = st.toggle("Đổi sang gương mặt mới (khác hẳn)", value=True,
+                            help="Tắt: giữ mặt template. Bật: tạo 1 model mới dùng chung Before+After.")
     cc1, cc2 = st.columns(2)
     with cc1:
         ethnicity = st.selectbox("Chủng tộc", ["Da trắng", "Châu Á", "Da đen"],
@@ -51,23 +57,27 @@ with col2:
     with cc2:
         gender = st.selectbox("Giới tính", ["Nữ", "Nam"], disabled=not change_face)
 
+    clothing_label = st.selectbox("Màu áo model", list(CLOTHING_COLORS.keys()))
+    clothing_en    = CLOTHING_COLORS[clothing_label]
+
     review_face = st.toggle("Duyệt gương mặt trước khi chạy tiếp", value=False,
                             disabled=not change_face,
                             help="Tạo gương mặt xong sẽ dừng để bạn xem; ưng thì bấm chạy tiếp.")
 
-    st.subheader("4️⃣ Chọn ảnh cần tạo")
-    want_after     = st.checkbox("Ảnh After (có lọn màu)", value=True)
-    want_before    = st.checkbox("Ảnh Before (tóc tự nhiên)", value=True)
+    st.subheader("5️⃣ Chọn ảnh cần tạo")
+    want_after     = st.checkbox("Ảnh After (có lọn màu, tự tin)", value=True)
+    want_before    = st.checkbox("Ảnh Before (tóc tự nhiên, nhẹ nhàng)", value=True)
     want_lifestyle = st.checkbox("Ảnh Lifestyle (tạo dáng)", value=True)
 
     hi_res = st.toggle("Xuất 4K siêu nét", value=False,
                        help="Ảnh độ phân giải cao (lâu hơn một chút).")
 
-# Số lượt cần (Lifestyle cần After; faceswap dùng chung)
+# Số lượt cần
 need_after_gen = want_after or want_lifestyle
 any_selected   = want_after or want_before or want_lifestyle
+need_swap      = change_face and any_selected
 cost = 0
-if change_face and any_selected:
+if need_swap:
     cost += 1
 if need_after_gen:
     cost += 1
@@ -81,7 +91,6 @@ with col2:
 
 # ===== Helpers =====
 def gen_step(label, fn):
-    """Chạy 1 bước: trừ quota, trả bytes (None nếu lỗi/hết lượt)."""
     global used, remaining
     if remaining <= 0:
         st.error("🚫 Hết lượt tạo.")
@@ -99,32 +108,36 @@ def gen_step(label, fn):
             return None
 
 
-def make_faceswap(t_bytes):
+def make_faceswap(after_tmpl_bytes):
     return gen_step("Đổi gương mặt (giữ lọn gốc)",
-                    lambda: run_nano_multi([t_bytes],
-                                           build_clipin_faceswap(ethnicity, gender),
+                    lambda: run_nano_multi([after_tmpl_bytes],
+                                           build_clipin_faceswap(ethnicity, gender,
+                                                                 clothing_en, "confident"),
                                            "1:1", hi_res))
 
 
-def run_rest(base_bytes, s_bytes, color_name, hex_color, safe_color, swap_bytes=None):
-    """Tạo After/Before/Lifestyle từ base_bytes. swap_bytes (nếu có) để hiển thị kèm."""
+def run_rest(after_base, before_tmpl, identity_ref, s_bytes,
+             color_name, hex_color, safe_color, swap_bytes=None):
     results = {}
     if swap_bytes is not None:
         results["swap"] = (f"doimat_goc_{safe_color}.png", swap_bytes)
 
     after_data = None
-    if base_bytes is not None and need_after_gen:
+    if after_base is not None and need_after_gen:
         after_data = gen_step(
             "Ảnh After (recolor lọn)",
-            lambda: run_nano_multi([base_bytes, s_bytes],
+            lambda: run_nano_multi([after_base, s_bytes],
                                    build_nano_highlight_prompt(color_name, hex_color, "thin"),
                                    "1:1", hi_res))
         if want_after and after_data is not None:
             results["after"] = (f"after_{safe_color}.png", after_data)
 
-    if base_bytes is not None and want_before:
-        b = gen_step("Ảnh Before (bỏ lọn màu)",
-                     lambda: run_nano_multi([base_bytes], build_clipin_before_from_after(),
+    if before_tmpl is not None and want_before:
+        match = change_face and identity_ref is not None
+        imgs = [before_tmpl, identity_ref] if match else [before_tmpl]
+        b = gen_step("Ảnh Before (tóc tự nhiên)",
+                     lambda: run_nano_multi(imgs,
+                                            build_clipin_before(clothing_en, match),
                                             "1:1", hi_res))
         if b is not None:
             results["before"] = (f"before_{safe_color}.png", b)
@@ -177,25 +190,23 @@ if use_review:
     pending = st.session_state.get("ci_swap_bytes")
 
     if pending is None:
-        # Bước 1: tạo gương mặt
         if st.button("🚀 Bước 1: Tạo gương mặt", type="primary",
                      use_container_width=True, disabled=(remaining == 0)):
             if not token:
                 st.error("Chưa nhập Replicate API Token ở sidebar.")
                 st.stop()
-            if not template_file:
-                st.error("Cần ảnh template (model đã gắn clip).")
+            if not after_tmpl_file:
+                st.error("Cần ảnh Template After (đã gắn clip) để tạo gương mặt.")
                 st.stop()
             if remaining < 1:
                 st.error("🚫 Đã hết lượt tạo.")
                 st.stop()
             os.environ["REPLICATE_API_TOKEN"] = token
-            swapped = make_faceswap(template_file.getvalue())
+            swapped = make_faceswap(after_tmpl_file.getvalue())
             if swapped is not None:
                 st.session_state["ci_swap_bytes"] = swapped
                 st.rerun()
     else:
-        # Bước 2: xem gương mặt, xác nhận hoặc tạo lại
         st.markdown("### 👤 Gương mặt vừa tạo")
         st.image(pending, width=300)
         st.download_button("⬇️ Tải ảnh gương mặt", pending,
@@ -220,7 +231,7 @@ if use_review:
                 st.error("Chưa nhập Replicate API Token ở sidebar.")
                 st.stop()
             os.environ["REPLICATE_API_TOKEN"] = token
-            swapped = make_faceswap(template_file.getvalue())
+            swapped = make_faceswap(after_tmpl_file.getvalue())
             if swapped is not None:
                 st.session_state["ci_swap_bytes"] = swapped
                 st.rerun()
@@ -229,13 +240,17 @@ if use_review:
             if not swatch_file:
                 st.error("Cần ảnh swatch màu highlight để chạy tiếp.")
                 st.stop()
+            if want_before and not before_tmpl_file:
+                st.error("Cần ảnh Template Before để tạo ảnh Before.")
+                st.stop()
             if not any_selected:
-                st.error("Chọn ít nhất 1 ảnh cần tạo (After / Before / Lifestyle).")
+                st.error("Chọn ít nhất 1 ảnh cần tạo.")
                 st.stop()
             os.environ["REPLICATE_API_TOKEN"] = token
             s_bytes, color_name, hex_color, safe_color = swatch_info()
-            results = run_rest(pending, s_bytes, color_name, hex_color, safe_color,
-                               swap_bytes=pending)
+            before_tmpl = before_tmpl_file.getvalue() if before_tmpl_file else None
+            results = run_rest(pending, before_tmpl, pending, s_bytes,
+                               color_name, hex_color, safe_color, swap_bytes=pending)
             del st.session_state["ci_swap_bytes"]
             st.success(f"Hoàn thành! Tạo được {len(results)} ảnh. Còn {remaining} lượt.")
             show_results(results)
@@ -247,14 +262,17 @@ else:
         if not token:
             st.error("Chưa nhập Replicate API Token ở sidebar.")
             st.stop()
-        if not template_file:
-            st.error("Cần ảnh template (model đã gắn clip).")
+        if not after_tmpl_file:
+            st.error("Cần ảnh Template After (đã gắn clip).")
             st.stop()
         if not swatch_file:
             st.error("Cần ảnh swatch màu highlight.")
             st.stop()
+        if want_before and not before_tmpl_file:
+            st.error("Cần ảnh Template Before để tạo ảnh Before.")
+            st.stop()
         if not any_selected:
-            st.error("Chọn ít nhất 1 ảnh cần tạo (After / Before / Lifestyle).")
+            st.error("Chọn ít nhất 1 ảnh cần tạo.")
             st.stop()
         if remaining < 1:
             st.error("🚫 Đã hết lượt tạo.")
@@ -265,14 +283,17 @@ else:
 
         os.environ["REPLICATE_API_TOKEN"] = token
         s_bytes, color_name, hex_color, safe_color = swatch_info()
+        before_tmpl = before_tmpl_file.getvalue() if before_tmpl_file else None
 
-        base_bytes = template_file.getvalue()
-        swap_bytes = None
+        after_base   = after_tmpl_file.getvalue()
+        swap_bytes   = None
+        identity_ref = None
         if change_face:
-            swap_bytes = make_faceswap(base_bytes)
-            base_bytes = swap_bytes  # None nếu lỗi
+            swap_bytes = make_faceswap(after_tmpl_file.getvalue())
+            after_base   = swap_bytes      # None nếu lỗi
+            identity_ref = swap_bytes
 
-        results = run_rest(base_bytes, s_bytes, color_name, hex_color, safe_color,
-                           swap_bytes=swap_bytes)
+        results = run_rest(after_base, before_tmpl, identity_ref, s_bytes,
+                           color_name, hex_color, safe_color, swap_bytes=swap_bytes)
         st.success(f"Hoàn thành! Tạo được {len(results)} ảnh. Còn {remaining} lượt.")
         show_results(results)

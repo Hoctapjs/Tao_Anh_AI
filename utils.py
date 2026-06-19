@@ -304,35 +304,80 @@ def run_nano_multi(images_bytes, prompt, aspect_ratio="1:1", hi_res=False):
 _ETH_MAP = {"Châu Á": "East Asian", "Da trắng": "Caucasian", "Da đen": "Black"}
 _GEN_MAP = {"Nữ": "woman", "Nam": "man"}
 
+_EXPR = {
+    "confident": "a happy, bright, warm and confident smile, a lively and self-assured expression",
+    "gentle":    "a soft, gentle, calm and serene expression with a subtle natural smile",
+    "neutral":   "a relaxed natural expression",
+}
 
-def build_clipin_faceswap(ethnicity, gender):
-    """Đổi gương mặt trên template, giữ NGUYÊN tóc + lọn clip + dáng + nền."""
+# Màu áo: nhãn tiếng Việt -> mô tả tiếng Anh
+CLOTHING_COLORS = {
+    "Giữ nguyên":   "",
+    "Trắng":        "white",
+    "Đen":          "black",
+    "Kem / Be":     "beige cream",
+    "Xám":          "grey",
+    "Xanh navy":    "navy blue",
+    "Xanh dương":   "blue",
+    "Xanh lá":      "green",
+    "Hồng":         "pink",
+    "Đỏ":           "red",
+    "Vàng":         "yellow",
+    "Nâu":          "brown",
+    "Tím":          "purple",
+}
+
+
+def _clothing_rule(clothing_en):
+    if clothing_en:
+        return (f"Change the COLOR of her top/clothing to {clothing_en} — keep the same style of garment, "
+                f"only change its color. ")
+    return ""
+
+
+def build_clipin_faceswap(ethnicity, gender, clothing_en="", expression="confident"):
+    """Đổi gương mặt KHÁC HẲN trên template + biểu cảm + màu áo; giữ tóc/lọn/dáng/nền."""
     e = _ETH_MAP.get(ethnicity, "Caucasian")
     g = _GEN_MAP.get(gender, "woman")
+    expr = _EXPR.get(expression, _EXPR["neutral"])
     return (
-        f"Replace ONLY the FACE and identity of the person in the image with a COMPLETELY NEW, different "
-        f"invented {g} {e} fashion hair model with a fresh new face that does not look like the original "
-        f"person. Adjust the skin tone to naturally match a {e} {g}. "
-        f"Keep EVERYTHING else 100% identical to the original image: the exact same hairstyle, hair color, "
-        f"hair length, straight hair texture, the EXACT same colored clip-in highlight strands (same color, "
-        f"same position, same thickness, same amount — do NOT change, thicken or move any strand), the same "
-        f"pose, the same clothing, the same framing and the same background. "
-        f"Only the face and skin change; the hair and everything else stay pixel-identical. "
+        f"Replace the FACE and identity of the person in the image with a COMPLETELY NEW, totally different "
+        f"invented {g} {e} fashion hair model. The new face must look like a clearly DIFFERENT person — do "
+        f"NOT keep ANY recognizable feature of the original person: different face shape, different eyes, "
+        f"nose, mouth, eyebrows and jaw. Nobody should be able to recognize the original model. "
+        f"Adjust the skin tone to naturally match a {e} {g}. Give her {expr}. "
+        f"{_clothing_rule(clothing_en)}"
+        f"Keep EVERYTHING else identical to the original image: the exact same hairstyle, hair color, hair "
+        f"length, straight hair texture, the EXACT same colored clip-in highlight strands (same color, "
+        f"position, thickness, amount — do NOT change/thicken/move any strand), the same pose, the same "
+        f"framing and the same background. "
         f"Photorealistic, natural, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
         f"Do NOT add borders, panels or a side-by-side/collage in the output."
     )
 
 
-def build_clipin_before_from_after():
-    """Ảnh Before: từ ảnh After -> bỏ hết lọn màu, giữ y mặt/dáng."""
+def build_clipin_before(clothing_en="", match_identity=True):
+    """Ảnh Before từ before-template (tóc tự nhiên). match_identity=True: lấy gương mặt
+    từ ảnh thứ 2 (ảnh After) để cùng 1 người; biểu cảm nhẹ nhàng + đổi màu áo."""
+    if match_identity:
+        identity = (
+            "The first image is the BEFORE pose/composition. The second image shows the TARGET person whose "
+            "face and identity you must use. Make the person in the first image have the EXACT SAME face and "
+            "identity as the model in the second image — clearly the same person, so the before and after "
+            "photos are obviously the same model. "
+        )
+    else:
+        identity = "Keep the person's own face and identity unchanged. "
     return (
-        "This is the BEFORE photo. Take the person in the first image and REMOVE ALL of the colored "
-        "highlight extension strands from her hair, so her hair becomes completely natural with NO colored "
-        "strands at all — just her plain natural dark hair everywhere. "
-        "Keep her face, identity, skin tone, hairstyle, hair length, the straight smooth hair texture, "
-        "pose, expression, clothing, framing and background EXACTLY the same as the first image. "
-        "Photorealistic, natural, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
-        "Do NOT include any borders, panels or a side-by-side/collage in the output."
+        f"This is the BEFORE photo. {identity}"
+        f"Give her {_EXPR['gentle']}. "
+        f"Her hair must be completely NATURAL with NO colored highlight strands at all — just plain natural "
+        f"dark hair everywhere. "
+        f"{_clothing_rule(clothing_en)}"
+        f"Keep the first image's pose, hairstyle, hair length, straight smooth hair texture, framing and "
+        f"background. "
+        f"Photorealistic, natural, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
+        f"Do NOT add borders, panels or a side-by-side/collage in the output."
     )
 
 
@@ -346,8 +391,8 @@ def build_clipin_lifestyle_from_after(color_name, hex_color):
         f"(color {color_name}, hex {hex_color}) — same position, same amount, same subtle thin look. "
         f"Do NOT add more colored strands, do NOT make them thicker, do NOT change the hair. "
         f"Change ONLY her pose: she now poses naturally and elegantly, turning slightly, with one hand "
-        f"gently holding a section of her hair to show off the colored highlight strands, relaxed "
-        f"confident expression. "
+        f"gently holding a section of her hair to show off the colored highlight strands, with a happy "
+        f"bright confident expression. "
         f"Premium editorial lifestyle style inspired by Luxy Hair: clean, bright, high-end and fashionable, "
         f"soft natural lighting, simple elegant background. Photorealistic, sharp, realistic. "
         f"Square 1:1 framing. EXACTLY ONE person, the same person as the first image. "
