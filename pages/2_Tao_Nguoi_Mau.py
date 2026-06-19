@@ -5,15 +5,13 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS,
     color_name_from_filename, extract_dominant_color,
     label_from_filename, run_text2img_model, build_text2img_prompt,
     run_nano_text2img, build_nano_text2img_prompt,
-    render_quota_bar, render_sidebar, save_used, run_with_retry,
+    render_sidebar, run_with_retry,
 )
 
 token, _, _ = render_sidebar()
-used, remaining = render_quota_bar()
 
 st.title("🧑 Tạo người mẫu mới từ màu tóc")
 st.caption("Chỉ cần upload ảnh swatch màu tóc — AI sẽ tự sinh người mẫu hoàn toàn mới "
@@ -83,10 +81,10 @@ with col2:
 
 if swatch_files:
     total = len(swatch_files)
-    st.info(f"Sẽ tạo **{total} ảnh** (1 ảnh mỗi màu tóc) — tốn **{total} lượt**.")
+    st.info(f"Sẽ tạo **{total} ảnh** (1 ảnh mỗi màu tóc).")
 
 run = st.button("🚀 Tạo người mẫu", type="primary",
-                use_container_width=True, disabled=(remaining == 0))
+                use_container_width=True)
 
 if run:
     if not token:
@@ -95,26 +93,13 @@ if run:
     if not swatch_files:
         st.error("Cần ít nhất 1 ảnh mẫu tóc.")
         st.stop()
-    if remaining == 0:
-        st.error("🚫 Đã hết lượt tạo.")
-        st.stop()
-
     os.environ["REPLICATE_API_TOKEN"] = token
     total   = len(swatch_files)
 
-    if total > remaining:
-        st.info(f"ℹ️ Batch cần {total} lượt nhưng chỉ còn {remaining}. "
-                f"App sẽ tự dừng khi hết lượt.")
-
     progress = st.progress(0.0, text=f"0/{total}")
     results  = []
-    stopped  = False
 
     for i, s_file in enumerate(swatch_files, start=1):
-        if remaining <= 0:
-            stopped = True
-            break
-
         s_bytes    = s_file.getvalue()
         color_name = color_name_from_filename(s_file.name)
         hex_color, tone, level = extract_dominant_color(s_bytes)
@@ -134,22 +119,15 @@ if run:
                        expanded=False) as status:
             try:
                 data = run_with_retry(run_fn)
-                used      += 1
-                remaining  = MAX_GENERATIONS - used
-                save_used(used)
                 results.append((out_name, data))
-                status.update(label=f"✅ {out_name} (còn {remaining} lượt)",
-                              state="complete")
+                status.update(label=f"✅ {out_name}", state="complete")
             except Exception as e:
                 status.update(label=f"❌ {out_name}: {e}", state="error")
 
         progress.progress(i / total, text=f"{i}/{total}")
 
     progress.empty()
-    if stopped:
-        st.warning(f"⏹️ Dừng vì hết lượt. Đã tạo được {len(results)} ảnh.")
-    else:
-        st.success(f"Hoàn thành! Tạo được {len(results)} ảnh. Còn {remaining} lượt.")
+    st.success(f"Hoàn thành! Tạo được {len(results)} ảnh.")
 
     # Hiển thị kết quả
     if results:

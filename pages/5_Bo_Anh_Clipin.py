@@ -5,15 +5,14 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS, CLOTHING_COLORS,
+    CLOTHING_COLORS,
     color_name_from_filename, extract_dominant_color,
     run_nano_multi, run_nano_banana, build_clipin_faceswap, build_nano_highlight_prompt,
     build_clipin_before, build_clipin_lifestyle_from_after,
-    render_quota_bar, render_sidebar, save_used, run_with_retry,
+    render_sidebar, run_with_retry,
 )
 
 token, _, _ = render_sidebar()
-used, remaining = render_quota_bar()
 
 st.title("📸 Bộ ảnh Highlight Clip-In")
 st.caption("Upload template Before (tóc tự nhiên) + template After (đã gắn clip) + swatch. "
@@ -72,36 +71,18 @@ with col2:
     hi_res = st.toggle("Xuất 4K siêu nét", value=False,
                        help="Ảnh độ phân giải cao (lâu hơn một chút).")
 
-# Số lượt cần
+# Số ảnh cần tạo
 need_after_gen = want_after or want_lifestyle
 any_selected   = want_after or want_before or want_lifestyle
 need_swap      = change_face and any_selected
-cost = 0
-if need_swap:
-    cost += 1
-if need_after_gen:
-    cost += 1
-if want_before:
-    cost += 1
-if want_lifestyle:
-    cost += 1
-with col2:
-    st.caption(f"⚠️ Lựa chọn hiện tại tốn **{cost} lượt**.")
 
 
 # ===== Helpers =====
 def gen_step(label, fn):
-    global used, remaining
-    if remaining <= 0:
-        st.error("🚫 Hết lượt tạo.")
-        return None
     with st.status(f"{label}...", expanded=False) as status:
         try:
             data = run_with_retry(fn)
-            used      += 1
-            remaining  = MAX_GENERATIONS - used
-            save_used(used)
-            status.update(label=f"✅ {label} (còn {remaining} lượt)", state="complete")
+            status.update(label=f"✅ {label}", state="complete")
             return data
         except Exception as e:
             status.update(label=f"❌ {label}: {e}", state="error")
@@ -194,15 +175,12 @@ if use_review:
 
     if pending is None:
         if st.button("🚀 Bước 1: Tạo gương mặt", type="primary",
-                     use_container_width=True, disabled=(remaining == 0)):
+                     use_container_width=True):
             if not token:
                 st.error("Chưa nhập Replicate API Token ở sidebar.")
                 st.stop()
             if not after_tmpl_file:
                 st.error("Cần ảnh Template After (đã gắn clip) để tạo gương mặt.")
-                st.stop()
-            if remaining < 1:
-                st.error("🚫 Đã hết lượt tạo.")
                 st.stop()
             os.environ["REPLICATE_API_TOKEN"] = token
             swapped = make_faceswap(after_tmpl_file.getvalue())
@@ -218,10 +196,10 @@ if use_review:
         b1, b2, b3 = st.columns(3)
         with b1:
             confirm = st.button("✅ Xác nhận & chạy tiếp", type="primary",
-                                use_container_width=True, disabled=(remaining == 0))
+                                use_container_width=True)
         with b2:
             regen = st.button("🔄 Tạo lại gương mặt", use_container_width=True,
-                              disabled=(remaining == 0))
+                              )
         with b3:
             cancel = st.button("❌ Hủy", use_container_width=True)
 
@@ -255,13 +233,13 @@ if use_review:
             results = run_rest(pending, before_tmpl, pending, s_bytes,
                                color_name, hex_color, safe_color, swap_bytes=pending)
             del st.session_state["ci_swap_bytes"]
-            st.success(f"Hoàn thành! Tạo được {len(results)} ảnh. Còn {remaining} lượt.")
+            st.success(f"Hoàn thành! Tạo được {len(results)} ảnh.")
             show_results(results)
 
 # ================= CHẾ ĐỘ CHẠY HẾT QUY TRÌNH =================
 else:
     if st.button("🚀 Tạo ảnh", type="primary",
-                 use_container_width=True, disabled=(remaining == 0)):
+                 use_container_width=True):
         if not token:
             st.error("Chưa nhập Replicate API Token ở sidebar.")
             st.stop()
@@ -277,12 +255,6 @@ else:
         if not any_selected:
             st.error("Chọn ít nhất 1 ảnh cần tạo.")
             st.stop()
-        if remaining < 1:
-            st.error("🚫 Đã hết lượt tạo.")
-            st.stop()
-        if remaining < cost:
-            st.warning(f"⚠️ Chỉ còn {remaining} lượt — có thể không đủ ({cost} lượt), "
-                       f"app sẽ dừng khi hết.")
 
         os.environ["REPLICATE_API_TOKEN"] = token
         s_bytes, color_name, hex_color, safe_color = swatch_info()
@@ -298,5 +270,5 @@ else:
 
         results = run_rest(after_base, before_tmpl, identity_ref, s_bytes,
                            color_name, hex_color, safe_color, swap_bytes=swap_bytes)
-        st.success(f"Hoàn thành! Tạo được {len(results)} ảnh. Còn {remaining} lượt.")
+        st.success(f"Hoàn thành! Tạo được {len(results)} ảnh.")
         show_results(results)

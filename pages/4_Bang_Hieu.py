@@ -5,13 +5,12 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS, SIGNBOARD_SIZES, SIGNBOARD_STYLES, SIGNBOARD_LOOKS,
+    SIGNBOARD_SIZES, SIGNBOARD_STYLES, SIGNBOARD_LOOKS,
     build_signboard_prompt, run_signboard_model,
-    render_quota_bar, render_sidebar, save_used, run_with_retry,
+    render_sidebar, run_with_retry,
 )
 
 token, _, _ = render_sidebar()
-used, remaining = render_quota_bar()
 
 st.title("🪧 Tạo bảng hiệu quảng cáo")
 st.caption("Nhập thông tin cửa hàng, chọn kích thước và phong cách — AI sẽ thiết kế "
@@ -39,16 +38,16 @@ with col2:
                                     "Hình ảnh tự nhiên: ảnh chụp thật của sản phẩm.")
     style_label = st.selectbox("Phong cách màu sắc", list(SIGNBOARD_STYLES.keys()))
     n_variants  = st.slider("Số mẫu tạo ra", 1, 4, 2,
-                            help="Mỗi mẫu là 1 phương án thiết kế khác nhau, tốn 1 lượt/mẫu.")
+                            help="Mỗi mẫu là 1 phương án thiết kế khác nhau.")
 
 aspect_ratio = SIGNBOARD_SIZES[size_label]
 
 if shop_name:
     st.info(f"Sẽ tạo **{n_variants} mẫu** bảng hiệu cho **{shop_name}** "
-            f"({size_label}) — tốn **{n_variants} lượt**.")
+            f"({size_label}).")
 
 run = st.button("🚀 Thiết kế bảng hiệu", type="primary",
-                use_container_width=True, disabled=(remaining == 0))
+                use_container_width=True)
 
 if run:
     if not token:
@@ -57,15 +56,8 @@ if run:
     if not shop_name.strip():
         st.error("Cần nhập ít nhất Tên cửa hàng.")
         st.stop()
-    if remaining == 0:
-        st.error("🚫 Đã hết lượt tạo.")
-        st.stop()
-
     os.environ["REPLICATE_API_TOKEN"] = token
     total = n_variants
-
-    if total > remaining:
-        st.info(f"ℹ️ Cần {total} lượt nhưng chỉ còn {remaining}. App sẽ tự dừng khi hết lượt.")
 
     prompt = build_signboard_prompt(
         shop_name.strip(), business.strip(), contact.strip(),
@@ -74,33 +66,21 @@ if run:
     safe_name = shop_name.strip().replace(" ", "-")
     progress  = st.progress(0.0, text=f"0/{total}")
     results   = []
-    stopped   = False
 
     for i in range(1, total + 1):
-        if remaining <= 0:
-            stopped = True
-            break
-
         out_name = f"banghieu_{safe_name}_{i}.png"
         with st.status(f"[{i}/{total}] Đang thiết kế mẫu {i}...", expanded=False) as status:
             try:
                 data = run_with_retry(lambda: run_signboard_model(prompt, aspect_ratio))
-                used      += 1
-                remaining  = MAX_GENERATIONS - used
-                save_used(used)
                 results.append((out_name, data))
-                status.update(label=f"✅ Mẫu {i} xong (còn {remaining} lượt)",
-                              state="complete")
+                status.update(label=f"✅ Mẫu {i} xong", state="complete")
             except Exception as e:
                 status.update(label=f"❌ Mẫu {i}: {e}", state="error")
 
         progress.progress(i / total, text=f"{i}/{total}")
 
     progress.empty()
-    if stopped:
-        st.warning(f"⏹️ Dừng vì hết lượt. Đã tạo được {len(results)} mẫu.")
-    else:
-        st.success(f"Hoàn thành! Tạo được {len(results)} mẫu. Còn {remaining} lượt.")
+    st.success(f"Hoàn thành! Tạo được {len(results)} mẫu.")
 
     if results:
         st.divider()

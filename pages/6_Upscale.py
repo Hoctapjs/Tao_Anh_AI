@@ -5,16 +5,14 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    run_upscale_model, render_quota_bar, render_sidebar, run_with_retry,
+    run_upscale_model, render_sidebar, run_with_retry,
 )
 
 token, _, _ = render_sidebar()
-used, remaining = render_quota_bar()
 
 st.title("🔍 Upscale ảnh siêu nét")
 st.caption(
     "Upload nhiều ảnh cùng lúc — AI sẽ phóng to và làm sắc nét từng ảnh (Real-ESRGAN). "
-    "Mỗi ảnh tốn **1 lượt**."
 )
 
 st.divider()
@@ -44,10 +42,7 @@ with col2:
 
 if uploaded_files:
     n = len(uploaded_files)
-    st.info(f"Đã chọn **{n} ảnh** — sẽ tốn **{n} lượt** (còn {remaining} lượt).")
-
-    if n > remaining:
-        st.warning(f"⚠️ Chỉ còn {remaining} lượt, app sẽ dừng sau {remaining} ảnh.")
+    st.info(f"Đã chọn **{n} ảnh**.")
 
     # Preview thumbnail
     preview_cols = st.columns(min(n, 5))
@@ -63,7 +58,7 @@ run = st.button(
     "🚀 Upscale tất cả",
     type="primary",
     use_container_width=True,
-    disabled=(remaining == 0 or not uploaded_files),
+    disabled=not uploaded_files,
 )
 
 if run:
@@ -73,17 +68,13 @@ if run:
     if not uploaded_files:
         st.error("Chưa chọn ảnh nào.")
         st.stop()
-    if remaining == 0:
-        st.error("🚫 Đã hết lượt tạo.")
-        st.stop()
-
     os.environ["REPLICATE_API_TOKEN"] = token
 
     results = []
-    total = min(len(uploaded_files), remaining)
+    total = len(uploaded_files)
     progress = st.progress(0.0, text=f"0/{total}")
 
-    for i, f in enumerate(uploaded_files[:total], start=1):
+    for i, f in enumerate(uploaded_files, start=1):
         name_stem = os.path.splitext(f.name)[0]
         out_name = f"{name_stem}_upscale_{scale}x.png"
 
@@ -92,13 +83,9 @@ if run:
                 data = run_with_retry(
                     lambda img=f.getvalue(): run_upscale_model(img, scale, face_enhance)
                 )
-                from utils import save_used, load_used, MAX_GENERATIONS
-                used_now = load_used() + 1
-                save_used(used_now)
-                remaining = MAX_GENERATIONS - used_now
                 results.append((out_name, data))
                 status.update(
-                    label=f"✅ {f.name} → {out_name} (còn {remaining} lượt)",
+                    label=f"✅ {f.name} → {out_name}",
                     state="complete",
                 )
             except Exception as e:
@@ -109,7 +96,7 @@ if run:
     progress.empty()
 
     if results:
-        st.success(f"Hoàn thành! Upscale được {len(results)}/{total} ảnh. Còn {remaining} lượt.")
+        st.success(f"Hoàn thành! Upscale được {len(results)}/{total} ảnh.")
         st.divider()
 
         cols = st.columns(min(len(results), 3))

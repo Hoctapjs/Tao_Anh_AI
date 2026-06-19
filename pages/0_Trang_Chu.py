@@ -1,8 +1,7 @@
 import streamlit as st
-from utils import render_quota_bar, render_sidebar
+from utils import render_sidebar
 
 render_sidebar()
-render_quota_bar()
 
 st.title("✂️ AI Tạo Ảnh Tóc")
 st.markdown("""
@@ -86,4 +85,3 @@ Tùy chọn **tăng cường khuôn mặt** (GFPGAN) nếu ảnh có người. T
     st.page_link("pages/6_Upscale.py", label="Đến trang Upscale ảnh →", icon="🔍")
 
 st.divider()
-st.caption("Quota 50 lần dùng chung cho cả 6 tính năng.")

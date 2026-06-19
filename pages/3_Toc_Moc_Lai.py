@@ -5,14 +5,13 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS, MODEL_MULTI,
+    MODEL_MULTI,
     color_name_from_filename, extract_dominant_color,
     label_from_filename, run_nano_banana, run_model, build_nano_highlight_prompt,
-    render_quota_bar, render_sidebar, save_used, run_with_retry,
+    render_sidebar, run_with_retry,
 )
 
 token, _, _ = render_sidebar()
-used, remaining = render_quota_bar()
 
 st.title("🌈 Đổi màu tóc móc lai")
 st.caption("Upload ảnh người mẫu (đã có sẵn lọn móc lai màu) + ảnh swatch màu mới. "
@@ -62,10 +61,10 @@ density   = "thin" if density_label == "Mảnh (ít tóc giả)" else "normal"
 
 if model_files and swatch_files:
     total = len(model_files) * len(swatch_files)
-    st.info(f"Sẽ tạo **{total} ảnh** ({len(model_files)} người mẫu × {len(swatch_files)} màu) — tốn **{total} lượt**.")
+    st.info(f"Sẽ tạo **{total} ảnh** ({len(model_files)} người mẫu × {len(swatch_files)} màu).")
 
 run = st.button("🚀 Tạo ảnh móc lai", type="primary",
-                use_container_width=True, disabled=(remaining == 0))
+                use_container_width=True)
 
 if run:
     if not token:
@@ -74,27 +73,14 @@ if run:
     if not model_files or not swatch_files:
         st.error("Cần ít nhất 1 ảnh người mẫu và 1 ảnh mẫu màu.")
         st.stop()
-    if remaining == 0:
-        st.error("🚫 Đã hết lượt tạo.")
-        st.stop()
-
     os.environ["REPLICATE_API_TOKEN"] = token
     tasks = [(m, s) for m in model_files for s in swatch_files]
     total = len(tasks)
 
-    if total > remaining:
-        st.info(f"ℹ️ Batch cần {total} lượt nhưng chỉ còn {remaining}. "
-                f"App sẽ tự dừng khi hết lượt.")
-
     progress = st.progress(0.0, text=f"0/{total}")
     results  = []
-    stopped  = False
 
     for i, (m_file, s_file) in enumerate(tasks, start=1):
-        if remaining <= 0:
-            stopped = True
-            break
-
         m_bytes    = m_file.getvalue()
         s_bytes    = s_file.getvalue()
         color_name = color_name_from_filename(s_file.name)
@@ -112,22 +98,15 @@ if run:
                        expanded=False) as status:
             try:
                 data = run_with_retry(run_fn)
-                used      += 1
-                remaining  = MAX_GENERATIONS - used
-                save_used(used)
                 results.append((out_name, data))
-                status.update(label=f"✅ {out_name} (còn {remaining} lượt)",
-                              state="complete")
+                status.update(label=f"✅ {out_name}", state="complete")
             except Exception as e:
                 status.update(label=f"❌ {out_name}: {e}", state="error")
 
         progress.progress(i / total, text=f"{i}/{total}")
 
     progress.empty()
-    if stopped:
-        st.warning(f"⏹️ Dừng vì hết lượt. Đã tạo được {len(results)} ảnh.")
-    else:
-        st.success(f"Hoàn thành! Tạo được {len(results)} ảnh. Còn {remaining} lượt.")
+    st.success(f"Hoàn thành! Tạo được {len(results)} ảnh.")
 
     if results:
         st.divider()

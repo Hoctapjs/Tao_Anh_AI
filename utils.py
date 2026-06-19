@@ -1,7 +1,6 @@
 import io
 import os
 import re
-import json
 import requests
 
 import replicate
@@ -18,27 +17,6 @@ MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
 MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
 MODEL_SIGNBOARD      = "ideogram-ai/ideogram-v3-quality"
 MODEL_UPSCALE        = "nightmareai/real-esrgan"
-
-MAX_GENERATIONS = 50
-INITIAL_USED    = 16
-USAGE_FILE      = "usage.json"
-
-
-# ====== QUOTA ======
-def load_used():
-    if os.path.exists(USAGE_FILE):
-        try:
-            with open(USAGE_FILE, "r", encoding="utf-8") as f:
-                return int(json.load(f).get("used", INITIAL_USED))
-        except Exception:
-            return INITIAL_USED
-    save_used(INITIAL_USED)
-    return INITIAL_USED
-
-
-def save_used(value):
-    with open(USAGE_FILE, "w", encoding="utf-8") as f:
-        json.dump({"used": int(value)}, f)
 
 
 # ====== IMAGE UTILS ======
@@ -584,25 +562,6 @@ def run_text2img_model(prompt, model=None):
     return output_to_bytes(replicate.run(model, input=inp))
 
 
-# ====== SHARED UI COMPONENTS ======
-def render_quota_bar():
-    used      = load_used()
-    remaining = max(0, MAX_GENERATIONS - used)
-
-    q1, q2, q3 = st.columns(3)
-    q1.metric("Đã dùng", f"{used}/{MAX_GENERATIONS}")
-    q2.metric("Còn lại", remaining)
-    q3.metric("Tối đa", MAX_GENERATIONS)
-    st.progress(used / MAX_GENERATIONS,
-                text=f"Đã dùng {used}/{MAX_GENERATIONS} lần • Còn lại {remaining} lần")
-    if remaining == 0:
-        st.error("🚫 Đã hết lượt tạo (50/50). Không thể tạo thêm.")
-    elif remaining <= 5:
-        st.warning(f"⚠️ Sắp hết lượt — chỉ còn {remaining} lần tạo.")
-
-    return used, remaining
-
-
 def render_sidebar():
     with st.sidebar:
         st.header("⚙️ Cấu hình")
@@ -624,10 +583,4 @@ def render_sidebar():
             key="use_multi_toggle",
         )
 
-        st.divider()
-        used      = load_used()
-        remaining = max(0, MAX_GENERATIONS - used)
-        st.metric("⚡ Lượt tạo còn lại", f"{remaining}/{MAX_GENERATIONS}")
-        st.caption("Mỗi lần gọi API tính là 1 lượt.")
-
-    return token, use_multi, remaining
+    return token, use_multi, None
