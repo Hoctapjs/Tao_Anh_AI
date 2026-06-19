@@ -313,14 +313,14 @@ def build_signboard_prompt(shop_name, business, contact, slogan,
                            style_label, extra=""):
     style = SIGNBOARD_STYLES.get(style_label, style_label)
 
-    lines = [f'the main shop name "{shop_name}" displayed large and bold as the focal point']
+    lines = [f'  - SHOP NAME (largest, focal point): "{shop_name}"']
     if business:
-        lines.append(f'a smaller line describing the business: "{business}"')
+        lines.append(f'  - business line (smaller): "{business}"')
     if slogan:
-        lines.append(f'a short slogan: "{slogan}"')
+        lines.append(f'  - slogan: "{slogan}"')
     if contact:
-        lines.append(f'contact info in small text at the bottom: "{contact}"')
-    text_block = "; ".join(lines)
+        lines.append(f'  - contact info (small, at the bottom): "{contact}"')
+    text_block = "\n".join(lines)
 
     extra_part = f" Additional details: {extra.strip()}." if extra and extra.strip() else ""
 
@@ -328,13 +328,22 @@ def build_signboard_prompt(shop_name, business, contact, slogan,
         f"A flat 2D graphic design of an advertising poster / banner for a Vietnamese shop. "
         f"This is a print-ready poster artwork, NOT a photo. "
         f"Style: {style}. "
-        f"The poster must contain the following Vietnamese text, spelled with CORRECT Vietnamese "
-        f"diacritics (accents) exactly as written, no spelling mistakes: {text_block}. "
+        f"The poster must display EXACTLY the following Vietnamese text, each on its own line:\n"
+        f"{text_block}\n"
+        f"VIETNAMESE TEXT RULES (very important): The text is in the Vietnamese language and uses "
+        f"Latin letters with diacritics. Reproduce every word LETTER-FOR-LETTER exactly as given above, "
+        f"including all Vietnamese special characters such as ă â đ ê ô ơ ư and the tone marks "
+        f"(à á ả ã ạ, è é ẻ ẽ ẹ, etc.). "
+        f"Do NOT drop, add, swap or change any accent or tone mark. Do NOT replace Vietnamese letters "
+        f"with plain English letters (e.g. keep 'ơ' not 'o', keep 'đ' not 'd'). "
+        f"Do NOT translate, do NOT invent extra words, and do NOT add any text that is not listed above. "
+        f"Spell-check the result so every Vietnamese word matches the given text perfectly. "
+        f"Use a clean, well-known font that fully supports Vietnamese diacritics. "
         f"DESIGN PRINCIPLES: strong clear visual hierarchy with the shop name most prominent and easy "
         f"to read from far away; high contrast between text and background; limited harmonious color "
         f"palette (2-3 main colors); generous margins and balanced spacing; legible typography; "
         f"a small simple icon or logo mark relevant to the business if suitable.{extra_part} "
-        f"The text must be sharp, perfectly legible and correctly spelled. "
+        f"The text must be sharp, perfectly legible and correctly spelled with all Vietnamese accents. "
         f"IMPORTANT: Output ONLY the flat poster artwork that fills the entire frame edge to edge, "
         f"as a clean digital design file. Do NOT show the poster hanging on a wall, on a building, on a "
         f"storefront, on a stand, on a mockup, or held by a person. No 3D perspective, no shadows of a "
