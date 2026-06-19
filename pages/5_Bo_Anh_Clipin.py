@@ -7,8 +7,8 @@ import streamlit as st
 from utils import (
     MAX_GENERATIONS,
     color_name_from_filename, extract_dominant_color,
-    run_nano_multi, build_clipin_before_prompt,
-    build_clipin_after_prompt, build_clipin_lifestyle_prompt,
+    run_nano_multi, build_clipin_after_recolor,
+    build_clipin_before_from_after, build_clipin_lifestyle_from_after,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
 )
 
@@ -16,26 +16,22 @@ token, _, _ = render_sidebar()
 used, remaining = render_quota_bar()
 
 st.title("📸 Bộ ảnh Highlight Clip-In")
-st.caption("Tạo bộ 3 ảnh đồng nhất gương mặt cho mỗi màu: Before (tóc tự nhiên) → "
-           "After (thêm vài line highlight mảnh) → Lifestyle (model tạo dáng). Tỷ lệ 1:1.")
+st.caption("Upload 1 ảnh template (model đã gắn clip thật) + swatch màu. App sẽ recolor lọn "
+           "sang màu swatch + đổi sang gương mặt mới, rồi tạo bộ 3 ảnh đồng nhất: "
+           "Before → After → Lifestyle (1:1).")
 
 st.divider()
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("1️⃣ Ảnh model (tùy chọn)")
-    model_file = st.file_uploader(
-        "Upload 1 ảnh model tóc tự nhiên — bỏ trống để AI tự sinh model mới",
-        type=["png", "jpg", "jpeg", "webp"], key="ci_model")
-    if model_file:
-        st.image(model_file.getvalue(), width=160)
-        st.caption("Sẽ giữ gương mặt & tóc của ảnh này xuyên suốt 3 ảnh.")
-    else:
-        st.caption("Chưa có ảnh — AI sẽ tự sinh model. Chọn đặc điểm bên dưới:")
-        ethnicity   = st.selectbox("Chủng tộc",  ["Da trắng", "Châu Á", "Da đen"], key="ci_eth")
-        gender      = st.selectbox("Giới tính",  ["Nữ", "Nam"], key="ci_gen")
-        hair_length = st.selectbox("Độ dài tóc", ["Dài", "Trung bình", "Ngắn"], key="ci_len")
+    st.subheader("1️⃣ Ảnh template (model gắn clip)")
+    template_file = st.file_uploader(
+        "Ảnh model đã gắn clip highlight thật (dùng làm khuôn)",
+        type=["png", "jpg", "jpeg", "webp"], key="ci_template")
+    if template_file:
+        st.image(template_file.getvalue(), width=160)
+        st.caption("Sẽ giữ kiểu tóc, vị trí lọn & dáng của ảnh này; chỉ đổi màu lọn + gương mặt.")
 
 with col2:
     st.subheader("2️⃣ Ảnh mẫu màu highlight")
@@ -44,6 +40,16 @@ with col2:
         type=["png", "jpg", "jpeg", "webp"], key="ci_swatch")
     if swatch_file:
         st.image(swatch_file.getvalue(), width=160)
+
+    st.subheader("3️⃣ Gương mặt model mới")
+    change_face = st.toggle("Đổi sang gương mặt mới", value=True,
+                            help="Tắt: giữ nguyên mặt template, chỉ đổi màu lọn.")
+    cc1, cc2 = st.columns(2)
+    with cc1:
+        ethnicity = st.selectbox("Chủng tộc", ["Da trắng", "Châu Á", "Da đen"],
+                                 disabled=not change_face)
+    with cc2:
+        gender = st.selectbox("Giới tính", ["Nữ", "Nam"], disabled=not change_face)
 
     hi_res = st.toggle("Xuất 4K siêu nét", value=False,
                        help="Ảnh độ phân giải cao (lâu hơn một chút).")
@@ -56,6 +62,9 @@ if run:
     if not token:
         st.error("Chưa nhập Replicate API Token ở sidebar.")
         st.stop()
+    if not template_file:
+        st.error("Cần ảnh template (model đã gắn clip).")
+        st.stop()
     if not swatch_file:
         st.error("Cần ảnh swatch màu highlight.")
         st.stop()
@@ -67,16 +76,16 @@ if run:
 
     os.environ["REPLICATE_API_TOKEN"] = token
 
+    t_bytes    = template_file.getvalue()
     s_bytes    = swatch_file.getvalue()
     color_name = color_name_from_filename(swatch_file.name)
     hex_color, _, _ = extract_dominant_color(s_bytes)
-    has_ref    = model_file is not None
-
     safe_color = color_name.replace(" ", "-")
-    results    = []
-    progress   = st.progress(0.0, text="0/3")
 
-    def do_step(idx, label, fn, out_name):
+    results  = {}   # key -> (name, data)
+    progress = st.progress(0.0, text="0/3")
+
+    def do_step(idx, key, label, fn, out_name):
         global used, remaining
         if remaining <= 0:
             return None
@@ -86,44 +95,36 @@ if run:
                 used      += 1
                 remaining  = MAX_GENERATIONS - used
                 save_used(used)
-                results.append((out_name, data))
+                results[key] = (out_name, data)
                 status.update(label=f"✅ {label} xong (còn {remaining} lượt)", state="complete")
                 return data
             except Exception as e:
                 status.update(label=f"❌ {label}: {e}", state="error")
                 return None
 
-    # --- Bước 1: Before ---
-    if has_ref:
-        m_bytes = model_file.getvalue()
-        before_prompt = build_clipin_before_prompt(True)
-        before_imgs   = [m_bytes]
-    else:
-        before_prompt = build_clipin_before_prompt(False, ethnicity, gender, hair_length)
-        before_imgs   = []
-    before_data = do_step(
-        1, "Ảnh Before (tóc tự nhiên)",
-        lambda: run_nano_multi(before_imgs, before_prompt, "1:1", hi_res),
-        f"before_{safe_color}.png")
+    # --- Bước 1: After = template + swatch -> recolor lọn + đổi mặt ---
+    after_data = do_step(
+        1, "after", "Ảnh After (recolor lọn + đổi mặt)",
+        lambda: run_nano_multi(
+            [t_bytes, s_bytes],
+            build_clipin_after_recolor(color_name, hex_color, ethnicity, gender, change_face),
+            "1:1", hi_res),
+        f"after_{safe_color}.png")
     progress.progress(1/3, text="1/3")
 
-    # --- Bước 2: After = Before + swatch -> thêm lọn highlight mảnh ---
-    after_data = None
-    if before_data:
-        after_data = do_step(
-            2, "Ảnh After (thêm highlight)",
-            lambda: run_nano_multi([before_data, s_bytes],
-                                   build_clipin_after_prompt(color_name, hex_color),
-                                   "1:1", hi_res),
-            f"after_{safe_color}.png")
-        progress.progress(2/3, text="2/3")
-
-    # --- Bước 3: Lifestyle = dùng chính ảnh After (giữ highlight giống hệt), đổi dáng ---
+    # --- Bước 2: Before = After -> bỏ hết lọn màu (giữ mặt/dáng) ---
     if after_data:
         do_step(
-            3, "Ảnh Lifestyle (tạo dáng)",
+            2, "before", "Ảnh Before (bỏ lọn màu)",
+            lambda: run_nano_multi([after_data], build_clipin_before_from_after(), "1:1", hi_res),
+            f"before_{safe_color}.png")
+        progress.progress(2/3, text="2/3")
+
+        # --- Bước 3: Lifestyle = After -> đổi dáng (giữ mặt + lọn) ---
+        do_step(
+            3, "lifestyle", "Ảnh Lifestyle (tạo dáng)",
             lambda: run_nano_multi([after_data],
-                                   build_clipin_lifestyle_prompt(color_name, hex_color),
+                                   build_clipin_lifestyle_from_after(color_name, hex_color),
                                    "1:1", hi_res),
             f"lifestyle_{safe_color}.png")
         progress.progress(1.0, text="3/3")
@@ -131,10 +132,12 @@ if run:
     progress.empty()
     st.success(f"Hoàn thành! Tạo được {len(results)}/3 ảnh. Còn {remaining} lượt.")
 
-    if results:
+    # Hiển thị theo thứ tự logic: Before -> After -> Lifestyle
+    ordered = [results[k] for k in ("before", "after", "lifestyle") if k in results]
+    if ordered:
         st.divider()
         cols = st.columns(3)
-        for idx, (name, data) in enumerate(results):
+        for idx, (name, data) in enumerate(ordered):
             with cols[idx % 3]:
                 st.image(data, caption=name, use_container_width=True)
                 st.download_button("⬇️ Tải", data, file_name=name,
@@ -142,7 +145,7 @@ if run:
 
         zip_buf = io.BytesIO()
         with zipfile.ZipFile(zip_buf, "w") as zf:
-            for name, data in results:
+            for name, data in ordered:
                 zf.writestr(name, data)
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         st.download_button("⬇️ Tải cả bộ (ZIP)", zip_buf.getvalue(),

@@ -301,64 +301,61 @@ def run_nano_multi(images_bytes, prompt, aspect_ratio="1:1", hi_res=False):
     return output_to_bytes(replicate.run(model, input=inp))
 
 
-def build_clipin_before_prompt(has_model_ref, ethnicity="", gender="", hair_length=""):
-    """Ảnh Before: tóc tự nhiên, chưa gắn clip highlight."""
-    if has_model_ref:
-        return (
-            "Create a clean studio BEFORE photo of the SAME woman shown in the reference image. "
-            "Keep her face, identity, natural hair color, hairstyle, hair length and hair thickness "
-            "exactly the same as the reference. Plain natural hair with NO colored highlights at all. "
-            "Front or slight three-quarter studio portrait, natural soft lighting, plain light grey "
-            "seamless background, realistic high-end fashion photography, photorealistic, sharp. "
-            "Square 1:1 framing. EXACTLY ONE person, clean single portrait."
+_ETH_MAP = {"Châu Á": "East Asian", "Da trắng": "Caucasian", "Da đen": "Black"}
+_GEN_MAP = {"Nữ": "woman", "Nam": "man"}
+
+
+def build_clipin_after_recolor(color_name, hex_color, ethnicity, gender, change_face=True):
+    """Ảnh After: từ template (model gắn clip thật) -> recolor lọn sang màu swatch
+    + đổi sang gương mặt người mới (giữ kiểu tóc, vị trí lọn, dáng)."""
+    e = _ETH_MAP.get(ethnicity, "Caucasian")
+    g = _GEN_MAP.get(gender, "woman")
+
+    if change_face:
+        face_rule = (
+            f"Replace the person's FACE and identity with a COMPLETELY NEW, different invented person — "
+            f"a {g} {e} fashion hair model with a fresh new face that does not look like the original "
+            f"person. Adjust the skin tone to naturally match a {e} {g}. "
         )
-    ethnicity_map   = {"Châu Á": "East Asian", "Da trắng": "Caucasian", "Da đen": "Black"}
-    gender_map      = {"Nữ": "woman", "Nam": "man"}
-    hair_length_map = {"Dài": "long", "Ngắn": "short", "Trung bình": "medium-length"}
-    e = ethnicity_map.get(ethnicity, "Caucasian")
-    g = gender_map.get(gender, "woman")
-    h = hair_length_map.get(hair_length, "long")
-    return (
-        f"A photorealistic studio BEFORE portrait of a {g} {e} hair model with {h}, straight, "
-        f"natural-colored hair and NO colored highlights at all. "
-        f"Natural soft studio lighting, plain light grey seamless background, high-end fashion "
-        f"photography, realistic, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait."
-    )
+    else:
+        face_rule = "Keep the original person's face and identity unchanged. "
 
-
-def build_clipin_after_prompt(color_name, hex_color):
-    """Ảnh After: giữ y hệt Before, thêm lọn clip-in mảnh dọc theo tóc (kiểu trang móc lai)."""
     return (
-        f"This is the AFTER photo. Take the SAME woman from the first image (the before photo) and keep "
-        f"her face, identity, expression, pose, framing, background, natural hair color, hairstyle, hair "
-        f"length, hair thickness and the exact same STRAIGHT hair texture EXACTLY the same — "
-        f"do NOT make the hair longer, thicker, fuller, wavy or curly, "
-        f"and do NOT change her natural hair color. "
-        f"Weave in a few VERY FINE, THIN, wispy clip-in colored highlight strands matching the color shown "
-        f"in the second image (the color swatch): {color_name}, hex {hex_color}. "
-        f"VERY IMPORTANT about thickness: each colored highlight must be a fine delicate wisp made of just "
-        f"a few individual hair strands, with slightly varied and irregular thickness, like REAL thin "
-        f"hair extension strands blended into the hair. Do NOT make thick solid vertical bands, do NOT make "
-        f"bold painted-looking stripes, do NOT make uniform wide blocks of color. The colored hair must be "
-        f"only a small subtle fraction of the total hair. "
-        f"The strands START high near the crown / hair parting and run as straight wisps flowing DOWN along "
-        f"the natural hair to the tips. Place them clustered naturally on the front sections framing the "
-        f"face (mainly toward one side), softly interwoven and scattered among the dark strands at "
-        f"irregular spacing — NOT evenly-spaced parallel stripes, NOT a neat symmetric pattern. "
-        f"Keep the hair perfectly STRAIGHT and smooth exactly like the before photo, do NOT make it wavy "
-        f"or curly. "
-        f"Match the exact hue, saturation and brightness of {hex_color}. "
-        f"Photorealistic, natural look, sharp. Square 1:1 framing. "
-        f"EXACTLY ONE person, the same person as the first image, clean single portrait. "
+        f"The first image shows a {g} with clip-in colored hair extension highlight strands in her hair. "
+        f"Do TWO things: "
+        f"(1) RECOLOR the existing colored highlight strands so they EXACTLY match the color in the second "
+        f"image (the color swatch): {color_name}, hex {hex_color}. Replace the old strand color 100% "
+        f"completely with no trace of the previous color left; match the exact hue, saturation and "
+        f"brightness of {hex_color}. Keep these highlight strands in the EXACT same positions, shape, "
+        f"thickness and amount as in the first image — they are thin natural clip-in strands, do NOT make "
+        f"them thicker or add new ones. "
+        f"(2) {face_rule}"
+        f"Keep EVERYTHING else identical to the first image: the hairstyle, the natural dark hair color, "
+        f"hair length, the straight smooth hair texture, the position of all highlight strands, the pose, "
+        f"the clothing, the framing and the background. Do NOT change the hair except the highlight color. "
+        f"Photorealistic, natural, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
         f"Do NOT include the swatch, borders, panels or a side-by-side/collage in the output."
     )
 
 
-def build_clipin_lifestyle_prompt(color_name, hex_color):
-    """Ảnh Lifestyle: dùng ảnh After làm gốc, đổi sang dáng tạo kiểu, giữ nguyên highlight."""
+def build_clipin_before_from_after():
+    """Ảnh Before: từ ảnh After -> bỏ hết lọn màu, giữ y mặt/dáng."""
     return (
-        f"A lifestyle fashion photo of the SAME woman from the first image, keeping her face, identity, "
-        f"natural hair color, hair length, thickness and the same STRAIGHT smooth hair texture identical "
+        "This is the BEFORE photo. Take the person in the first image and REMOVE ALL of the colored "
+        "highlight extension strands from her hair, so her hair becomes completely natural with NO colored "
+        "strands at all — just her plain natural dark hair everywhere. "
+        "Keep her face, identity, skin tone, hairstyle, hair length, the straight smooth hair texture, "
+        "pose, expression, clothing, framing and background EXACTLY the same as the first image. "
+        "Photorealistic, natural, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
+        "Do NOT include any borders, panels or a side-by-side/collage in the output."
+    )
+
+
+def build_clipin_lifestyle_from_after(color_name, hex_color):
+    """Ảnh Lifestyle: từ ảnh After -> đổi dáng tạo kiểu, giữ nguyên mặt + lọn màu."""
+    return (
+        f"A lifestyle fashion photo of the SAME person from the first image, keeping her face, identity, "
+        f"skin tone, natural hair color, hair length and the same STRAIGHT smooth hair texture identical "
         f"(do NOT make the hair wavy or curly). "
         f"Keep the EXACT same thin colored clip-in highlight strands that are already in the first image "
         f"(color {color_name}, hex {hex_color}) — same position, same amount, same subtle thin look. "
