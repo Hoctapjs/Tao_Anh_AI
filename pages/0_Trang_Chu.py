@@ -13,7 +13,7 @@ Chọn tính năng từ **sidebar bên trái** để bắt đầu:
 
 st.divider()
 
-c1, c2 = st.columns(2)
+c1, c2, c3 = st.columns(3)
 
 with c1:
     st.markdown("### 💇 Đổi màu tóc")
@@ -37,5 +37,16 @@ AI sẽ tự sinh ra người mẫu hoàn toàn mới với màu tóc, chủng t
     """)
     st.page_link("pages/2_Tao_Nguoi_Mau.py", label="Đến trang Tạo người mẫu mới →", icon="🧑")
 
+with c3:
+    st.markdown("### 🌈 Tóc móc lai")
+    st.markdown("""
+Upload **ảnh người mẫu** + **ảnh swatch màu**.
+
+AI sẽ thêm vài lọn tóc móc lai (highlight) đúng màu swatch vào mái tóc, giữ nguyên tóc gốc và khuôn mặt.
+
+**Phù hợp khi:** bạn muốn quảng bá tóc kẹp móc lai nhiều màu trên người mẫu có sẵn.
+    """)
+    st.page_link("pages/3_Toc_Moc_Lai.py", label="Đến trang Tóc móc lai →", icon="🌈")
+
 st.divider()
-st.caption("Quota 50 lần dùng chung cho cả 2 tính năng.")
+st.caption("Quota 50 lần dùng chung cho cả 3 tính năng.")

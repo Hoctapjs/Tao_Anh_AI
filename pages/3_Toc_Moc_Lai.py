@@ -1,0 +1,138 @@
+import io
+import os
+import zipfile
+from datetime import datetime
+
+import streamlit as st
+from utils import (
+    MAX_GENERATIONS,
+    color_name_from_filename, extract_dominant_color,
+    label_from_filename, run_nano_banana, build_nano_highlight_prompt,
+    render_quota_bar, render_sidebar, save_used, run_with_retry,
+)
+
+token, _, _ = render_sidebar()
+used, remaining = render_quota_bar()
+
+st.title("🌈 Tóc móc lai (highlight)")
+st.caption("Upload ảnh người mẫu + ảnh swatch màu. App sẽ thêm vài lọn tóc móc lai "
+           "đúng màu swatch vào mái tóc, giữ nguyên phần tóc gốc và khuôn mặt.")
+
+st.divider()
+
+col1, col2 = st.columns(2)
+with col1:
+    st.subheader("1️⃣ Ảnh người mẫu")
+    model_files = st.file_uploader("Ảnh người mẫu (có thể chọn nhiều)",
+                                   type=["png", "jpg", "jpeg", "webp"],
+                                   accept_multiple_files=True, key="hl_models")
+    if model_files:
+        st.image([f.getvalue() for f in model_files], width=110)
+
+with col2:
+    st.subheader("2️⃣ Ảnh mẫu màu tóc")
+    swatch_files = st.file_uploader("Swatch màu tóc (đặt tên kiểu 2-blue.png)",
+                                    type=["png", "jpg", "jpeg", "webp"],
+                                    accept_multiple_files=True, key="hl_swatches")
+    if swatch_files:
+        st.image([f.getvalue() for f in swatch_files], width=110)
+
+st.subheader("3️⃣ Kiểu móc lai")
+o1, o2, o3 = st.columns(3)
+with o1:
+    placement = st.selectbox(
+        "Vị trí lọn",
+        ["Hai bên khung mặt", "Một bên", "Lọn ẩn dưới lớp tóc", "Rải đều khắp tóc"])
+with o2:
+    amount = st.selectbox(
+        "Số lượng lọn",
+        ["Vừa (3-5 lọn)", "Ít (1-2 lọn)", "Nhiều (nhiều lọn)"])
+with o3:
+    hi_res = st.toggle(
+        "Xuất 4K siêu nét", value=False,
+        help="Bật: ảnh độ phân giải cao cho quảng bá (lâu hơn một chút).")
+
+if model_files and swatch_files:
+    total = len(model_files) * len(swatch_files)
+    st.info(f"Sẽ tạo **{total} ảnh** ({len(model_files)} người mẫu × {len(swatch_files)} màu) — tốn **{total} lượt**.")
+
+run = st.button("🚀 Tạo ảnh móc lai", type="primary",
+                use_container_width=True, disabled=(remaining == 0))
+
+if run:
+    if not token:
+        st.error("Chưa nhập Replicate API Token ở sidebar.")
+        st.stop()
+    if not model_files or not swatch_files:
+        st.error("Cần ít nhất 1 ảnh người mẫu và 1 ảnh mẫu màu.")
+        st.stop()
+    if remaining == 0:
+        st.error("🚫 Đã hết lượt tạo.")
+        st.stop()
+
+    os.environ["REPLICATE_API_TOKEN"] = token
+    tasks = [(m, s) for m in model_files for s in swatch_files]
+    total = len(tasks)
+
+    if total > remaining:
+        st.info(f"ℹ️ Batch cần {total} lượt nhưng chỉ còn {remaining}. "
+                f"App sẽ tự dừng khi hết lượt.")
+
+    progress = st.progress(0.0, text=f"0/{total}")
+    results  = []
+    stopped  = False
+
+    for i, (m_file, s_file) in enumerate(tasks, start=1):
+        if remaining <= 0:
+            stopped = True
+            break
+
+        m_bytes    = m_file.getvalue()
+        s_bytes    = s_file.getvalue()
+        color_name = color_name_from_filename(s_file.name)
+        hex_color, tone, level = extract_dominant_color(s_bytes)
+        label      = label_from_filename(m_file.name)
+        safe_color = color_name.replace(" ", "-")
+        out_name   = f"{label}_moclai_{safe_color}.png"
+        prompt     = build_nano_highlight_prompt(color_name, hex_color, placement, amount)
+        run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_nano_banana(mb, sb, p, hi_res)
+
+        with st.status(f"[{i}/{total}] {label} + móc lai {color_name} ({hex_color})",
+                       expanded=False) as status:
+            try:
+                data = run_with_retry(run_fn)
+                used      += 1
+                remaining  = MAX_GENERATIONS - used
+                save_used(used)
+                results.append((out_name, data))
+                status.update(label=f"✅ {out_name} (còn {remaining} lượt)",
+                              state="complete")
+            except Exception as e:
+                status.update(label=f"❌ {out_name}: {e}", state="error")
+
+        progress.progress(i / total, text=f"{i}/{total}")
+
+    progress.empty()
+    if stopped:
+        st.warning(f"⏹️ Dừng vì hết lượt. Đã tạo được {len(results)} ảnh.")
+    else:
+        st.success(f"Hoàn thành! Tạo được {len(results)} ảnh. Còn {remaining} lượt.")
+
+    if results:
+        st.divider()
+        cols = st.columns(3)
+        for idx, (name, data) in enumerate(results):
+            with cols[idx % 3]:
+                st.image(data, caption=name, use_container_width=True)
+                st.download_button("⬇️ Tải", data, file_name=name,
+                                   mime="image/png", key=f"hl_dl_{idx}")
+
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, "w") as zf:
+            for name, data in results:
+                zf.writestr(name, data)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        st.download_button("⬇️ Tải tất cả (ZIP)", zip_buf.getvalue(),
+                           file_name=f"moclai_results_{ts}.zip",
+                           mime="application/zip", type="primary",
+                           use_container_width=True)

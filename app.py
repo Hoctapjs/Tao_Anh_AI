@@ -6,5 +6,6 @@ pg = st.navigation([
     st.Page("pages/0_Trang_Chu.py",     title="Trang chủ",       icon="🏠", default=True),
     st.Page("pages/1_Doi_Mau_Toc.py",   title="Đổi màu tóc",     icon="💇"),
     st.Page("pages/2_Tao_Nguoi_Mau.py", title="Tạo người mẫu",   icon="🧑"),
+    st.Page("pages/3_Toc_Moc_Lai.py",   title="Tóc móc lai",     icon="🌈"),
 ])
 pg.run()
