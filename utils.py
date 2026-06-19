@@ -309,7 +309,7 @@ _GEN_MAP = {"Nữ": "woman", "Nam": "man"}
 
 _EXPR = {
     "confident": "a happy, bright, warm and confident smile, a lively and self-assured expression",
-    "gentle":    "a soft, gentle, calm and serene expression with a subtle natural smile",
+    "gentle":    "a soft, calm and serene expression — relaxed, natural, NOT smiling, lips gently closed",
     "neutral":   "a relaxed natural expression",
 }
 
