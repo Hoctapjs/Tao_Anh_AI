@@ -284,16 +284,18 @@ def run_nano_text2img(swatch_bytes, prompt, hi_res=False):
 
 
 # ====== BẢNG HIỆU QUẢNG CÁO ======
-# Kích thước bảng hiệu phổ biến ở VN -> aspect_ratio gần nhất của ideogram
+# Kích thước (cm) phổ biến ở VN -> aspect_ratio gần nhất nano-banana-2 hỗ trợ
 SIGNBOARD_SIZES = {
-    "Bảng ngang cửa hàng (3:1)":        "3:1",
-    "Bảng ngang mặt tiền (2:1)":        "2:1",
-    "Bảng ngang tiêu chuẩn (16:9)":     "16:9",
-    "Bảng vuông (1:1)":                 "1:1",
-    "Bảng dọc đứng (1:2)":              "1:2",
-    "Bảng dọc treo (9:16)":             "9:16",
-    "Standee / poster dọc (3:4)":       "3:4",
-    "Hộp đèn ngang (16:10)":            "16:10",
+    "80 x 100 cm (dọc 4:5)":       "4:5",
+    "100 x 80 cm (ngang 5:4)":     "5:4",
+    "80 x 120 cm (dọc 2:3)":       "2:3",
+    "60 x 80 cm (dọc 3:4)":        "3:4",
+    "Bảng ngang cửa hàng (3:1)":   "3:1",
+    "Bảng ngang mặt tiền (2:1)":   "2:1",
+    "Bảng ngang tiêu chuẩn (16:9)":"16:9",
+    "Bảng vuông (1:1)":            "1:1",
+    "Bảng dọc đứng (3:4)":         "3:4",
+    "Bảng dọc treo (9:16)":        "9:16",
 }
 
 # Phong cách phổ thông cho bảng hiệu cửa hàng VN
@@ -323,29 +325,33 @@ def build_signboard_prompt(shop_name, business, contact, slogan,
     extra_part = f" Additional details: {extra.strip()}." if extra and extra.strip() else ""
 
     return (
-        f"A professional storefront signboard / shop sign design for a Vietnamese business. "
+        f"A flat 2D graphic design of an advertising poster / banner for a Vietnamese shop. "
+        f"This is a print-ready poster artwork, NOT a photo. "
         f"Style: {style}. "
-        f"The sign must contain the following Vietnamese text, spelled with CORRECT Vietnamese "
+        f"The poster must contain the following Vietnamese text, spelled with CORRECT Vietnamese "
         f"diacritics (accents) exactly as written, no spelling mistakes: {text_block}. "
-        f"DESIGN PRINCIPLES for a retail shop sign: strong clear visual hierarchy with the shop name "
-        f"most prominent and easy to read from far away; high contrast between text and background; "
-        f"limited harmonious color palette (2-3 main colors); generous margins and balanced spacing; "
-        f"legible typography; a small simple icon or logo mark relevant to the business if suitable; "
-        f"clean horizontal layout suitable for mounting above a shop entrance.{extra_part} "
+        f"DESIGN PRINCIPLES: strong clear visual hierarchy with the shop name most prominent and easy "
+        f"to read from far away; high contrast between text and background; limited harmonious color "
+        f"palette (2-3 main colors); generous margins and balanced spacing; legible typography; "
+        f"a small simple icon or logo mark relevant to the business if suitable.{extra_part} "
         f"The text must be sharp, perfectly legible and correctly spelled. "
-        f"Flat front view of the signboard only, like a real printed shop sign, high resolution, "
-        f"professional graphic design, commercial quality."
+        f"IMPORTANT: Output ONLY the flat poster artwork that fills the entire frame edge to edge, "
+        f"as a clean digital design file. Do NOT show the poster hanging on a wall, on a building, on a "
+        f"storefront, on a stand, on a mockup, or held by a person. No 3D perspective, no shadows of a "
+        f"physical object, no surrounding environment, no street scene — just the flat front-facing "
+        f"design itself, like an exported graphic design / Canva poster. "
+        f"High resolution, professional graphic design, commercial quality."
     )
 
 
-def run_signboard_model(prompt, aspect_ratio="3:1"):
+def run_signboard_model(prompt, aspect_ratio="4:5"):
     inp = {
         "prompt": prompt,
         "aspect_ratio": aspect_ratio,
-        "style_type": "Design",
-        "magic_prompt_option": "Auto",
+        "resolution": "2K",
+        "output_format": "png",
     }
-    return output_to_bytes(replicate.run(MODEL_SIGNBOARD, input=inp))
+    return output_to_bytes(replicate.run(MODEL_NANO2, input=inp))
 
 
 def run_with_retry(fn, max_retries=3, wait_seconds=12):
