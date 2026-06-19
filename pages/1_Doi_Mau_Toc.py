@@ -8,6 +8,7 @@ from utils import (
     MAX_GENERATIONS, MODEL_MULTI, MODEL_SINGLE, MODEL_SINGLE_MAX,
     color_name_from_filename, extract_dominant_color,
     label_from_filename, run_model, build_prompt,
+    run_nano_banana, build_nano_prompt,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
 )
 
@@ -39,9 +40,11 @@ with col2:
 
 quality = st.radio(
     "Chất lượng ảnh",
-    options=["Tiêu chuẩn", "Chất lượng cao"],
+    options=["Tiêu chuẩn", "Chất lượng cao", "Giữ mặt tốt nhất"],
     horizontal=True,
-    help="Chất lượng cao cho ảnh sắc nét, chi tiết hơn — chỉ áp dụng khi tắt multi-image ở sidebar.",
+    help="• Tiêu chuẩn / Chất lượng cao: đổi màu nhanh.\n"
+         "• Giữ mặt tốt nhất: giữ khuôn mặt giống hệt, bám màu swatch sát nhất "
+         "(không phụ thuộc toggle multi-image).",
 )
 
 if model_files and swatch_files:
@@ -63,7 +66,10 @@ if run:
         st.stop()
 
     os.environ["REPLICATE_API_TOKEN"] = token
-    if use_multi:
+    use_nano = (quality == "Giữ mặt tốt nhất")
+    if use_nano:
+        model = None  # Nano Banana có hàm gọi riêng
+    elif use_multi:
         model = MODEL_MULTI
     elif quality == "Chất lượng cao":
         model = MODEL_SINGLE_MAX
@@ -92,12 +98,17 @@ if run:
         label      = label_from_filename(m_file.name)
         safe_color = color_name.replace(" ", "-")
         out_name   = f"{label}_{safe_color}.png"
-        prompt     = build_prompt(color_name, hex_color, tone, level, use_multi)
+        if use_nano:
+            prompt = build_nano_prompt(color_name, hex_color)
+            run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_nano_banana(mb, sb, p)
+        else:
+            prompt = build_prompt(color_name, hex_color, tone, level, use_multi)
+            run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_model(model, mb, sb, p, use_multi)
 
         with st.status(f"[{i}/{total}] {label} + {color_name} ({hex_color})",
                        expanded=False) as status:
             try:
-                data = run_with_retry(lambda: run_model(model, m_bytes, s_bytes, prompt, use_multi))
+                data = run_with_retry(run_fn)
                 used      += 1
                 remaining  = MAX_GENERATIONS - used
                 save_used(used)

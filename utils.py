@@ -12,6 +12,7 @@ from PIL import Image
 MODEL_MULTI        = "flux-kontext-apps/multi-image-kontext-pro"
 MODEL_SINGLE       = "black-forest-labs/flux-kontext-pro"
 MODEL_SINGLE_MAX   = "black-forest-labs/flux-kontext-max"
+MODEL_NANO         = "google/nano-banana"
 MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
 MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
 
@@ -163,6 +164,29 @@ def run_model(model, model_bytes, swatch_bytes, prompt, multi):
             "output_format": "png",
         }
     return output_to_bytes(replicate.run(model, input=inp))
+
+
+def build_nano_prompt(color_name, hex_color):
+    return (
+        f"Change ONLY the hair color of the person in the first image to exactly match "
+        f"the hair color shown in the second image (the color swatch). "
+        f"The new hair color is {color_name}, hex {hex_color}. "
+        f"Every strand, from the roots at the scalp to the tips, must be this exact uniform color — "
+        f"no dark roots, no shadow at the hairline, no ombre or highlights. "
+        f"Keep her face, skin, facial features, expression, pose, framing and background "
+        f"completely identical to the first image. Do not change anything except the hair color. "
+        f"Output a single photorealistic portrait of this one person."
+    )
+
+
+def run_nano_banana(model_bytes, swatch_bytes, prompt):
+    """Nano Banana: nhận list ảnh qua image_input. Ảnh 1 = người mẫu, ảnh 2 = swatch."""
+    inp = {
+        "prompt": prompt,
+        "image_input": [io.BytesIO(model_bytes), io.BytesIO(swatch_bytes)],
+        "output_format": "png",
+    }
+    return output_to_bytes(replicate.run(MODEL_NANO, input=inp))
 
 
 def run_with_retry(fn, max_retries=3, wait_seconds=12):
