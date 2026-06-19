@@ -5,7 +5,7 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    CLOTHING_COLORS, MODEL_MULTI,
+    CLOTHING_COLORS, MODEL_SINGLE_MAX,
     color_name_from_filename, extract_dominant_color,
     run_nano_multi, run_nano_banana, run_model,
     build_clipin_faceswap, build_nano_highlight_prompt,
@@ -74,10 +74,11 @@ with col2:
 
     after_engine = st.radio(
         "Engine recolor lọn (ảnh After)",
-        ["nano-banana", "FLUX Kontext (giữ texture)"],
+        ["nano-banana", "FLUX Kontext Max (giữ texture)"],
         horizontal=True,
-        help="• nano-banana: bám màu tốt, hỗ trợ 4K.\n"
-             "• FLUX Kontext: giữ texture/sáng-tối lọn tự nhiên hơn, ít bị tô phẳng.")
+        help="• nano-banana: bám màu tốt theo swatch, hỗ trợ 4K.\n"
+             "• FLUX Kontext Max: giữ texture/sáng-tối lọn tự nhiên hơn, ít bị tô phẳng "
+             "(màu theo mã hex, không 4K).")
 
 # Số ảnh cần tạo
 need_after_gen = want_after or want_lifestyle
@@ -114,10 +115,13 @@ def run_rest(after_base, before_tmpl, identity_ref, s_bytes,
 
     after_data = None
     if after_base is not None and need_after_gen:
-        recolor_prompt = build_nano_highlight_prompt(color_name, hex_color, "thin")
         if use_flux_after:
-            run_after = lambda: run_model(MODEL_MULTI, after_base, s_bytes, recolor_prompt, True)
+            # FLUX Kontext Max single-image: không có ảnh swatch nên không bị dán collage
+            recolor_prompt = build_nano_highlight_prompt(color_name, hex_color, "thin",
+                                                         with_swatch=False)
+            run_after = lambda: run_model(MODEL_SINGLE_MAX, after_base, None, recolor_prompt, False)
         else:
+            recolor_prompt = build_nano_highlight_prompt(color_name, hex_color, "thin")
             run_after = lambda: run_nano_banana(after_base, s_bytes, recolor_prompt, hi_res)
         after_data = gen_step("Ảnh After (recolor lọn)", run_after)
         if want_after and after_data is not None:

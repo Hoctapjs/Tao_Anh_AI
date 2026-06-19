@@ -160,7 +160,19 @@ def build_nano_prompt(color_name, hex_color):
     )
 
 
-def build_nano_highlight_prompt(color_name, hex_color, density="thin"):
+def build_nano_highlight_prompt(color_name, hex_color, density="thin", with_swatch=True):
+    if with_swatch:
+        color_ref = (f"recolor them so they EXACTLY match the color shown in the second image "
+                     f"(the color swatch): {color_name}, hex {hex_color}. ")
+        no_collage = (
+            "Do NOT include the second image (the color swatch), and do NOT paste, append or show the swatch, "
+            "any reference image, borders, or extra panels anywhere in the output. ")
+    else:
+        color_ref = f"recolor them so they EXACTLY become {color_name}, hex {hex_color}. "
+        no_collage = (
+            "Do NOT paste, append or show any swatch, reference image, borders, or extra panels anywhere "
+            "in the output. ")
+
     if density == "thin":
         density_rule = (
             f"IMPORTANT — keep the colored strands MINIMAL and THIN: render them as a few slim, sparse "
@@ -181,8 +193,7 @@ def build_nano_highlight_prompt(color_name, hex_color, density="thin"):
     return (
         f"In the first image, the person already has brightly colored clip-in hair extension strands "
         f"(unnatural dyed color, e.g. blue/green/pink) woven into their natural hair. "
-        f"Identify the existing colored extension strands and recolor them so they EXACTLY match the "
-        f"color shown in the second image (the color swatch): {color_name}, hex {hex_color}. "
+        f"Identify the existing colored extension strands and {color_ref}"
         f"CRITICAL: replace the old extension color 100% completely — there must be NO trace, patch, "
         f"streak or pixel of the original color (such as blue) left anywhere in the final image. "
         f"Recolor it the way real HAIR DYE works: KEEP the existing strand's own brightness, shine, "
@@ -231,8 +242,7 @@ def build_nano_highlight_prompt(color_name, hex_color, density="thin"):
         f"Photorealistic, high detail, natural hair texture throughout. "
         f"CRITICAL COMPOSITION RULES: The output must be ONLY the single edited portrait of this one "
         f"person, with the EXACT same framing, crop and zoom as the first image. "
-        f"Do NOT include the second image (the color swatch), and do NOT paste, append or show the swatch, "
-        f"any reference image, borders, or extra panels anywhere in the output. "
+        f"{no_collage}"
         f"Do NOT create a side-by-side, split-screen, diptych, collage, grid or two-panel image. "
         f"There must be exactly ONE person and ONE photo in the result — just the clean edited portrait."
     )
