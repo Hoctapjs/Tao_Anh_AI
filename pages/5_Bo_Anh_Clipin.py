@@ -7,7 +7,7 @@ import streamlit as st
 from utils import (
     MAX_GENERATIONS,
     color_name_from_filename, extract_dominant_color,
-    run_nano_multi, build_clipin_after_recolor,
+    run_nano_multi, build_clipin_faceswap, build_nano_highlight_prompt,
     build_clipin_before_from_after, build_clipin_lifestyle_from_after,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
 )
@@ -53,7 +53,9 @@ with col2:
 
     hi_res = st.toggle("Xuất 4K siêu nét", value=False,
                        help="Ảnh độ phân giải cao (lâu hơn một chút).")
-    st.caption("⚠️ Mỗi bộ tạo 3 ảnh = tốn **3 lượt**.")
+    cost = 4 if change_face else 3
+    st.caption(f"⚠️ Bộ này tốn **{cost} lượt** "
+               f"({'đổi mặt + recolor + before + lifestyle' if change_face else 'recolor + before + lifestyle'}).")
 
 run = st.button("🚀 Tạo bộ 3 ảnh", type="primary",
                 use_container_width=True, disabled=(remaining == 0))
@@ -71,8 +73,9 @@ if run:
     if remaining < 1:
         st.error("🚫 Đã hết lượt tạo.")
         st.stop()
-    if remaining < 3:
-        st.warning(f"⚠️ Chỉ còn {remaining} lượt — có thể không đủ cho cả 3 ảnh, app sẽ dừng khi hết.")
+    if remaining < cost:
+        st.warning(f"⚠️ Chỉ còn {remaining} lượt — có thể không đủ cho cả bộ ({cost} lượt), "
+                   f"app sẽ dừng khi hết.")
 
     os.environ["REPLICATE_API_TOKEN"] = token
 
@@ -83,51 +86,67 @@ if run:
     safe_color = color_name.replace(" ", "-")
 
     results  = {}   # key -> (name, data)
-    progress = st.progress(0.0, text="0/3")
+    total    = cost
+    step_no  = [0]
+    progress = st.progress(0.0, text=f"0/{total}")
 
-    def do_step(idx, key, label, fn, out_name):
+    def do_step(key, label, fn, out_name=None):
         global used, remaining
         if remaining <= 0:
             return None
-        with st.status(f"[{idx}/3] {label}...", expanded=False) as status:
+        step_no[0] += 1
+        data = None
+        with st.status(f"[{step_no[0]}/{total}] {label}...", expanded=False) as status:
             try:
                 data = run_with_retry(fn)
                 used      += 1
                 remaining  = MAX_GENERATIONS - used
                 save_used(used)
-                results[key] = (out_name, data)
+                if out_name:
+                    results[key] = (out_name, data)
                 status.update(label=f"✅ {label} xong (còn {remaining} lượt)", state="complete")
-                return data
             except Exception as e:
                 status.update(label=f"❌ {label}: {e}", state="error")
-                return None
+                data = None
+        progress.progress(step_no[0] / total, text=f"{step_no[0]}/{total}")
+        return data
 
-    # --- Bước 1: After = template + swatch -> recolor lọn + đổi mặt ---
-    after_data = do_step(
-        1, "after", "Ảnh After (recolor lọn + đổi mặt)",
-        lambda: run_nano_multi(
-            [t_bytes, s_bytes],
-            build_clipin_after_recolor(color_name, hex_color, ethnicity, gender, change_face),
-            "1:1", hi_res),
-        f"after_{safe_color}.png")
-    progress.progress(1/3, text="1/3")
+    # --- Bước A (nếu đổi mặt): faceswap template, giữ nguyên lọn ---
+    base_bytes = t_bytes
+    if change_face:
+        swapped = do_step(
+            "_swap", "Đổi gương mặt (giữ lọn gốc)",
+            lambda: run_nano_multi([t_bytes],
+                                   build_clipin_faceswap(ethnicity, gender), "1:1", hi_res))
+        if swapped:
+            base_bytes = swapped
+        else:
+            base_bytes = None
 
-    # --- Bước 2: Before = After -> bỏ hết lọn màu (giữ mặt/dáng) ---
+    # --- After: recolor lọn bằng đúng cách trang móc lai ---
+    after_data = None
+    if base_bytes is not None:
+        after_data = do_step(
+            "after", "Ảnh After (recolor lọn)",
+            lambda: run_nano_multi([base_bytes, s_bytes],
+                                   build_nano_highlight_prompt(color_name, hex_color, "normal"),
+                                   "1:1", hi_res),
+            f"after_{safe_color}.png")
+
+    # --- Before = After -> bỏ hết lọn màu (giữ mặt/dáng) ---
     if after_data:
         do_step(
-            2, "before", "Ảnh Before (bỏ lọn màu)",
+            "before", "Ảnh Before (bỏ lọn màu)",
             lambda: run_nano_multi([after_data], build_clipin_before_from_after(), "1:1", hi_res),
             f"before_{safe_color}.png")
-        progress.progress(2/3, text="2/3")
 
-        # --- Bước 3: Lifestyle = After -> đổi dáng (giữ mặt + lọn) ---
+        # --- Lifestyle = After -> đổi dáng (giữ mặt + lọn) ---
         do_step(
-            3, "lifestyle", "Ảnh Lifestyle (tạo dáng)",
+            "lifestyle", "Ảnh Lifestyle (tạo dáng)",
             lambda: run_nano_multi([after_data],
                                    build_clipin_lifestyle_from_after(color_name, hex_color),
                                    "1:1", hi_res),
             f"lifestyle_{safe_color}.png")
-        progress.progress(1.0, text="3/3")
 
     progress.empty()
     st.success(f"Hoàn thành! Tạo được {len(results)}/3 ảnh. Còn {remaining} lượt.")

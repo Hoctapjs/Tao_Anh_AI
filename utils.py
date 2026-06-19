@@ -305,41 +305,21 @@ _ETH_MAP = {"Châu Á": "East Asian", "Da trắng": "Caucasian", "Da đen": "Bla
 _GEN_MAP = {"Nữ": "woman", "Nam": "man"}
 
 
-def build_clipin_after_recolor(color_name, hex_color, ethnicity, gender, change_face=True):
-    """Ảnh After: từ template (model gắn clip thật) -> recolor lọn sang màu swatch
-    + đổi sang gương mặt người mới (giữ kiểu tóc, vị trí lọn, dáng)."""
+def build_clipin_faceswap(ethnicity, gender):
+    """Đổi gương mặt trên template, giữ NGUYÊN tóc + lọn clip + dáng + nền."""
     e = _ETH_MAP.get(ethnicity, "Caucasian")
     g = _GEN_MAP.get(gender, "woman")
-
-    if change_face:
-        face_rule = (
-            f"Replace the person's FACE and identity with a COMPLETELY NEW, different invented person — "
-            f"a {g} {e} fashion hair model with a fresh new face that does not look like the original "
-            f"person. Adjust the skin tone to naturally match a {e} {g}. "
-        )
-    else:
-        face_rule = "Keep the original person's face and identity unchanged. "
-
     return (
-        f"The first image shows a {g} with clip-in colored hair extension highlight strands in her hair. "
-        f"Do TWO things: "
-        f"(1) RECOLOR the existing colored highlight strands so they EXACTLY match the color in the second "
-        f"image (the color swatch): {color_name}, hex {hex_color}. "
-        f"Find EVERY part of those colored strands anywhere in the hair — near the crown, the hair parting, "
-        f"the roots at the scalp, the top of the head, the sides, AND all the way down to the tips. "
-        f"CRITICAL: replace the old strand color 100% completely — there must be NO trace, patch, streak or "
-        f"pixel of the original strand color (such as blue) left anywhere, INCLUDING the upper part of the "
-        f"strands near the roots and crown. Every part of each colored strand, from where it starts at the "
-        f"top near the scalp all the way down to the very tip, must become the exact uniform color "
-        f"{hex_color}; match the exact hue, saturation and brightness of {hex_color}. "
-        f"Keep these highlight strands in the EXACT same positions, shape, thickness and amount as in the "
-        f"first image — they are thin natural clip-in strands, do NOT make them thicker or add new ones. "
-        f"(2) {face_rule}"
-        f"Keep EVERYTHING else identical to the first image: the hairstyle, the natural dark hair color, "
-        f"hair length, the straight smooth hair texture, the position of all highlight strands, the pose, "
-        f"the clothing, the framing and the background. Do NOT change the hair except the highlight color. "
+        f"Replace ONLY the FACE and identity of the person in the image with a COMPLETELY NEW, different "
+        f"invented {g} {e} fashion hair model with a fresh new face that does not look like the original "
+        f"person. Adjust the skin tone to naturally match a {e} {g}. "
+        f"Keep EVERYTHING else 100% identical to the original image: the exact same hairstyle, hair color, "
+        f"hair length, straight hair texture, the EXACT same colored clip-in highlight strands (same color, "
+        f"same position, same thickness, same amount — do NOT change, thicken or move any strand), the same "
+        f"pose, the same clothing, the same framing and the same background. "
+        f"Only the face and skin change; the hair and everything else stay pixel-identical. "
         f"Photorealistic, natural, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
-        f"Do NOT include the swatch, borders, panels or a side-by-side/collage in the output."
+        f"Do NOT add borders, panels or a side-by-side/collage in the output."
     )
 
 
