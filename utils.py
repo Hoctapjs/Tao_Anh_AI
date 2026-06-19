@@ -331,10 +331,30 @@ CLOTHING_COLORS = {
 }
 
 
+_ETH_DETAIL = {
+    "East Asian": (
+        "distinctly East Asian facial features: monolid or double-eyelid almond-shaped eyes, "
+        "high cheekbones, soft straight brows, small refined nose, porcelain smooth East Asian skin tone"
+    ),
+    "Caucasian": (
+        "distinctly Caucasian European facial features: defined bone structure, deep-set eyes, "
+        "sculpted nose bridge, fair European skin tone — NOT American, NOT generic Western"
+    ),
+    "Black": (
+        "distinctly Black African facial features: full lips, broad nose, rich deep skin tone, "
+        "strong cheekbones"
+    ),
+}
+
+
 def _clothing_rule(clothing_en):
     if clothing_en:
-        return (f"Change the COLOR of her top/clothing to {clothing_en} — keep the same style of garment, "
-                f"only change its color. ")
+        return (
+            f"Replace her outfit with a LUXURIOUS, high-fashion {clothing_en} garment — "
+            f"think premium editorial fashion: elegant drape, fine fabric texture (silk, satin, cashmere, "
+            f"or structured tailoring), polished and sophisticated. The garment must be {clothing_en} in color "
+            f"and look expensive and on-trend. Do NOT keep the original clothing style if it looks casual. "
+        )
     return ""
 
 
@@ -343,12 +363,16 @@ def build_clipin_faceswap(ethnicity, gender, clothing_en="", expression="confide
     e = _ETH_MAP.get(ethnicity, "Caucasian")
     g = _GEN_MAP.get(gender, "woman")
     expr = _EXPR.get(expression, _EXPR["neutral"])
+    eth_detail = _ETH_DETAIL.get(e, "")
     return (
-        f"Replace the FACE and identity of the person in the image with a COMPLETELY NEW, totally different "
-        f"invented {g} {e} fashion hair model. The new face must look like a clearly DIFFERENT person — do "
-        f"NOT keep ANY recognizable feature of the original person: different face shape, different eyes, "
-        f"nose, mouth, eyebrows and jaw. Nobody should be able to recognize the original model. "
-        f"Adjust the skin tone to naturally match a {e} {g}. Give her {expr}. "
+        f"COMPLETELY replace the face and full identity of the person in this image with a brand-new, "
+        f"totally DIFFERENT invented {g} who is CLEARLY and UNMISTAKABLY {e}. "
+        f"The new face MUST have {eth_detail}. "
+        f"Make it IMPOSSIBLE to recognize the original person — every single facial feature must change: "
+        f"face shape, forehead, eye shape and spacing, nose bridge and tip, lip shape, jawline, chin, "
+        f"cheekbones and brow arch. The result must look like a COMPLETELY DIFFERENT human being. "
+        f"DO NOT keep any Western/American/Caucasian features if the target ethnicity is {e}. "
+        f"Give her {expr}. "
         f"{_clothing_rule(clothing_en)}"
         f"Keep EVERYTHING else identical to the original image: the exact same hairstyle, the SAME natural "
         f"hair color (keep blonde blonde, do NOT darken), hair length, hair texture, the EXACT same colored "
@@ -380,7 +404,8 @@ def build_clipin_before(clothing_en="", match_identity=True):
         f"{_clothing_rule(clothing_en)}"
         f"Keep the first image's pose, hairstyle, hair color, hair length, hair texture, framing and "
         f"background. "
-        f"Photorealistic, natural, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
+        f"Photorealistic, high-end editorial fashion photo, natural, sharp. "
+        f"Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
         f"Do NOT add borders, panels or a side-by-side/collage in the output."
     )
 
