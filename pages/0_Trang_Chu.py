@@ -13,7 +13,7 @@ Chọn tính năng từ **sidebar bên trái** để bắt đầu:
 
 st.divider()
 
-c1, c2, c3 = st.columns(3)
+c1, c2 = st.columns(2)
 
 with c1:
     st.markdown("### 💇 Đổi màu tóc")
@@ -37,6 +37,8 @@ AI sẽ tự sinh ra người mẫu hoàn toàn mới với màu tóc, chủng t
     """)
     st.page_link("pages/2_Tao_Nguoi_Mau.py", label="Đến trang Tạo người mẫu mới →", icon="🧑")
 
+c3, c4 = st.columns(2)
+
 with c3:
     st.markdown("### 🌈 Đổi màu tóc móc lai")
     st.markdown("""
@@ -48,5 +50,16 @@ AI sẽ nhận diện các lọn móc lai có sẵn và đổi sang đúng màu 
     """)
     st.page_link("pages/3_Toc_Moc_Lai.py", label="Đến trang Đổi màu tóc móc lai →", icon="🌈")
 
+with c4:
+    st.markdown("### 🪧 Tạo bảng hiệu quảng cáo")
+    st.markdown("""
+Nhập **thông tin cửa hàng** + chọn **kích thước & phong cách**.
+
+AI sẽ thiết kế bảng hiệu với chữ tiếng Việt, theo các nguyên tắc thiết kế bảng hiệu cửa hàng.
+
+**Phù hợp khi:** bạn cần mẫu bảng hiệu nhanh cho quán ăn, cà phê, cửa hàng buôn bán.
+    """)
+    st.page_link("pages/4_Bang_Hieu.py", label="Đến trang Tạo bảng hiệu →", icon="🪧")
+
 st.divider()
-st.caption("Quota 50 lần dùng chung cho cả 3 tính năng.")
+st.caption("Quota 50 lần dùng chung cho cả 4 tính năng.")

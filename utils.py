@@ -16,6 +16,7 @@ MODEL_NANO         = "google/nano-banana"
 MODEL_NANO2        = "google/nano-banana-2"
 MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
 MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
+MODEL_SIGNBOARD      = "ideogram-ai/ideogram-v3-quality"
 
 MAX_GENERATIONS = 50
 INITIAL_USED    = 16
@@ -280,6 +281,71 @@ def run_nano_text2img(swatch_bytes, prompt, hi_res=False):
     else:
         model = MODEL_NANO
     return output_to_bytes(replicate.run(model, input=inp))
+
+
+# ====== BẢNG HIỆU QUẢNG CÁO ======
+# Kích thước bảng hiệu phổ biến ở VN -> aspect_ratio gần nhất của ideogram
+SIGNBOARD_SIZES = {
+    "Bảng ngang cửa hàng (3:1)":        "3:1",
+    "Bảng ngang mặt tiền (2:1)":        "2:1",
+    "Bảng ngang tiêu chuẩn (16:9)":     "16:9",
+    "Bảng vuông (1:1)":                 "1:1",
+    "Bảng dọc đứng (1:2)":              "1:2",
+    "Bảng dọc treo (9:16)":             "9:16",
+    "Standee / poster dọc (3:4)":       "3:4",
+    "Hộp đèn ngang (16:10)":            "16:10",
+}
+
+# Phong cách phổ thông cho bảng hiệu cửa hàng VN
+SIGNBOARD_STYLES = {
+    "Hiện đại tối giản":   "modern minimalist flat design, clean sans-serif typography, bold solid color background",
+    "Truyền thống VN":     "traditional Vietnamese shop sign style, warm red and yellow colors, classic bold typography",
+    "Sang trọng cao cấp":  "elegant premium look, gold and dark colors, refined serif typography, luxury feel",
+    "Tươi sáng bắt mắt":   "bright eye-catching colors, vibrant and friendly, high contrast, playful but clean",
+    "Ẩm thực / quán ăn":   "appetizing food-business style, warm inviting colors, friendly rounded typography",
+    "Cà phê / trà sữa":    "trendy cafe and milk-tea style, cozy modern colors, stylish lettering",
+}
+
+
+def build_signboard_prompt(shop_name, business, contact, slogan,
+                           style_label, extra=""):
+    style = SIGNBOARD_STYLES.get(style_label, style_label)
+
+    lines = [f'the main shop name "{shop_name}" displayed large and bold as the focal point']
+    if business:
+        lines.append(f'a smaller line describing the business: "{business}"')
+    if slogan:
+        lines.append(f'a short slogan: "{slogan}"')
+    if contact:
+        lines.append(f'contact info in small text at the bottom: "{contact}"')
+    text_block = "; ".join(lines)
+
+    extra_part = f" Additional details: {extra.strip()}." if extra and extra.strip() else ""
+
+    return (
+        f"A professional storefront signboard / shop sign design for a Vietnamese business. "
+        f"Style: {style}. "
+        f"The sign must contain the following Vietnamese text, spelled with CORRECT Vietnamese "
+        f"diacritics (accents) exactly as written, no spelling mistakes: {text_block}. "
+        f"DESIGN PRINCIPLES for a retail shop sign: strong clear visual hierarchy with the shop name "
+        f"most prominent and easy to read from far away; high contrast between text and background; "
+        f"limited harmonious color palette (2-3 main colors); generous margins and balanced spacing; "
+        f"legible typography; a small simple icon or logo mark relevant to the business if suitable; "
+        f"clean horizontal layout suitable for mounting above a shop entrance.{extra_part} "
+        f"The text must be sharp, perfectly legible and correctly spelled. "
+        f"Flat front view of the signboard only, like a real printed shop sign, high resolution, "
+        f"professional graphic design, commercial quality."
+    )
+
+
+def run_signboard_model(prompt, aspect_ratio="3:1"):
+    inp = {
+        "prompt": prompt,
+        "aspect_ratio": aspect_ratio,
+        "style_type": "Design",
+        "magic_prompt_option": "Auto",
+    }
+    return output_to_bytes(replicate.run(MODEL_SIGNBOARD, input=inp))
 
 
 def run_with_retry(fn, max_retries=3, wait_seconds=12):
