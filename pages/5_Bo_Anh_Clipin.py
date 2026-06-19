@@ -5,9 +5,10 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    CLOTHING_COLORS,
+    CLOTHING_COLORS, MODEL_MULTI,
     color_name_from_filename, extract_dominant_color,
-    run_nano_multi, run_nano_banana, build_clipin_faceswap, build_nano_highlight_prompt,
+    run_nano_multi, run_nano_banana, run_model,
+    build_clipin_faceswap, build_nano_highlight_prompt,
     build_clipin_before, build_clipin_lifestyle_from_after,
     render_sidebar, run_with_retry,
 )
@@ -71,10 +72,18 @@ with col2:
     hi_res = st.toggle("Xuất 4K siêu nét", value=False,
                        help="Ảnh độ phân giải cao (lâu hơn một chút).")
 
+    after_engine = st.radio(
+        "Engine recolor lọn (ảnh After)",
+        ["nano-banana", "FLUX Kontext (giữ texture)"],
+        horizontal=True,
+        help="• nano-banana: bám màu tốt, hỗ trợ 4K.\n"
+             "• FLUX Kontext: giữ texture/sáng-tối lọn tự nhiên hơn, ít bị tô phẳng.")
+
 # Số ảnh cần tạo
 need_after_gen = want_after or want_lifestyle
 any_selected   = want_after or want_before or want_lifestyle
 need_swap      = change_face and any_selected
+use_flux_after = after_engine.startswith("FLUX")
 
 
 # ===== Helpers =====
@@ -105,11 +114,12 @@ def run_rest(after_base, before_tmpl, identity_ref, s_bytes,
 
     after_data = None
     if after_base is not None and need_after_gen:
-        after_data = gen_step(
-            "Ảnh After (recolor lọn)",
-            lambda: run_nano_banana(after_base, s_bytes,
-                                    build_nano_highlight_prompt(color_name, hex_color, "thin"),
-                                    hi_res))
+        recolor_prompt = build_nano_highlight_prompt(color_name, hex_color, "thin")
+        if use_flux_after:
+            run_after = lambda: run_model(MODEL_MULTI, after_base, s_bytes, recolor_prompt, True)
+        else:
+            run_after = lambda: run_nano_banana(after_base, s_bytes, recolor_prompt, hi_res)
+        after_data = gen_step("Ảnh After (recolor lọn)", run_after)
         if want_after and after_data is not None:
             results["after"] = (f"after_{safe_color}.png", after_data)
 
