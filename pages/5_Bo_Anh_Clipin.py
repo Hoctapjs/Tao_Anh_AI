@@ -147,7 +147,7 @@ if run:
         after_data = do_step(
             "after", "Ảnh After (recolor lọn)",
             lambda: run_nano_multi([base_bytes, s_bytes],
-                                   build_nano_highlight_prompt(color_name, hex_color, "normal"),
+                                   build_nano_highlight_prompt(color_name, hex_color, "thin"),
                                    "1:1", hi_res),
             f"after_{safe_color}.png" if want_after else None)
 
