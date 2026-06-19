@@ -51,6 +51,18 @@ AI sẽ nhận diện các lọn móc lai có sẵn và đổi sang đúng màu 
     st.page_link("pages/3_Toc_Moc_Lai.py", label="Đến trang Đổi màu tóc móc lai →", icon="🌈")
 
 with c4:
+    st.markdown("### 📸 Bộ ảnh Highlight Clip-In")
+    st.markdown("""
+Tạo bộ **3 ảnh đồng nhất gương mặt**: Before → After → Lifestyle.
+
+Upload ảnh model (hoặc để AI tự sinh) + swatch màu. Giữ nguyên tóc gốc, chỉ thêm vài line highlight mảnh.
+
+**Phù hợp khi:** bạn cần bộ ảnh quảng bá sản phẩm kẹp highlight clip-in theo từng màu.
+    """)
+    st.page_link("pages/5_Bo_Anh_Clipin.py", label="Đến trang Bộ ảnh Clip-In →", icon="📸")
+
+c5, _ = st.columns(2)
+with c5:
     st.markdown("### 🪧 Tạo bảng hiệu quảng cáo")
     st.markdown("""
 Nhập **thông tin cửa hàng** + chọn **kích thước & phong cách**.
@@ -62,4 +74,4 @@ AI sẽ thiết kế bảng hiệu với chữ tiếng Việt, theo các nguyên
     st.page_link("pages/4_Bang_Hieu.py", label="Đến trang Tạo bảng hiệu →", icon="🪧")
 
 st.divider()
-st.caption("Quota 50 lần dùng chung cho cả 4 tính năng.")
+st.caption("Quota 50 lần dùng chung cho cả 5 tính năng.")

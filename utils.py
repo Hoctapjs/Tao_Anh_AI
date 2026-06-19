@@ -283,6 +283,83 @@ def run_nano_text2img(swatch_bytes, prompt, hi_res=False):
     return output_to_bytes(replicate.run(model, input=inp))
 
 
+# ====== BỘ 3 ẢNH HIGHLIGHT CLIP-IN (Before / After / Lifestyle) ======
+def run_nano_multi(images_bytes, prompt, aspect_ratio="1:1", hi_res=False):
+    """Nano Banana đa năng: nhận list bytes ảnh + aspect_ratio tùy chỉnh.
+    images_bytes có thể rỗng (text-to-image) hoặc nhiều ảnh tham chiếu."""
+    inp = {
+        "prompt": prompt,
+        "image_input": [io.BytesIO(b) for b in images_bytes],
+        "aspect_ratio": aspect_ratio,
+        "output_format": "png",
+    }
+    if hi_res:
+        inp["resolution"] = "4K"
+        model = MODEL_NANO2
+    else:
+        model = MODEL_NANO
+    return output_to_bytes(replicate.run(model, input=inp))
+
+
+def build_clipin_before_prompt(has_model_ref, ethnicity="", gender="", hair_length=""):
+    """Ảnh Before: tóc tự nhiên, chưa gắn clip highlight."""
+    if has_model_ref:
+        return (
+            "Create a clean studio BEFORE photo of the SAME woman shown in the reference image. "
+            "Keep her face, identity, natural hair color, hairstyle, hair length and hair thickness "
+            "exactly the same as the reference. Plain natural hair with NO colored highlights at all. "
+            "Front or slight three-quarter studio portrait, natural soft lighting, plain light grey "
+            "seamless background, realistic high-end fashion photography, photorealistic, sharp. "
+            "Square 1:1 framing. EXACTLY ONE person, clean single portrait."
+        )
+    ethnicity_map   = {"Châu Á": "East Asian", "Da trắng": "Caucasian", "Da đen": "Black"}
+    gender_map      = {"Nữ": "woman", "Nam": "man"}
+    hair_length_map = {"Dài": "long", "Ngắn": "short", "Trung bình": "medium-length"}
+    e = ethnicity_map.get(ethnicity, "Caucasian")
+    g = gender_map.get(gender, "woman")
+    h = hair_length_map.get(hair_length, "long")
+    return (
+        f"A photorealistic studio BEFORE portrait of a {g} {e} hair model with {h}, straight, "
+        f"natural-colored hair and NO colored highlights at all. "
+        f"Natural soft studio lighting, plain light grey seamless background, high-end fashion "
+        f"photography, realistic, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait."
+    )
+
+
+def build_clipin_after_prompt(color_name, hex_color):
+    """Ảnh After: giữ y hệt Before, chỉ thêm vài line highlight mảnh từ 3 clip."""
+    return (
+        f"This is the AFTER photo. Take the SAME woman from the first image (the before photo) and keep "
+        f"her face, identity, expression, pose, framing, background, natural hair color, hairstyle, hair "
+        f"length and hair thickness EXACTLY the same — do NOT make the hair longer, thicker or fuller, "
+        f"and do NOT change her natural hair color. "
+        f"Add ONLY a few thin colored highlight strands from three small clip-in hair extensions, matching "
+        f"the color shown in the second image (the color swatch): {color_name}, hex {hex_color}. "
+        f"The highlight effect must be SUBTLE and NATURAL — just a few slim colored strands framing one "
+        f"side of the hair, NOT a thick block, NOT covering much hair. "
+        f"Match the exact hue, saturation and brightness of {hex_color}. "
+        f"Photorealistic, natural look, sharp. Square 1:1 framing. "
+        f"EXACTLY ONE person, the same person as the first image, clean single portrait. "
+        f"Do NOT include the swatch, borders, panels or a side-by-side/collage in the output."
+    )
+
+
+def build_clipin_lifestyle_prompt(color_name, hex_color):
+    """Ảnh Lifestyle: model tạo dáng tự nhiên, phong cách Luxy Hair."""
+    return (
+        f"A lifestyle fashion photo of the SAME woman from the first image, keeping her face and identity "
+        f"identical. She is posing naturally and elegantly, one hand gently touching or holding her hair "
+        f"to show off the colored highlight strands, with a relaxed confident expression. "
+        f"Her hair keeps its natural color, length and thickness, with the same few thin clip-in colored "
+        f"highlight strands matching the second image swatch: {color_name}, hex {hex_color} — subtle and "
+        f"natural, just a few slim strands, not a thick block. "
+        f"Premium editorial lifestyle style inspired by Luxy Hair: clean, bright, high-end and fashionable, "
+        f"soft natural lighting, simple elegant background. Photorealistic, sharp, realistic. "
+        f"Square 1:1 framing. EXACTLY ONE person, the same person as the first image. "
+        f"Do NOT include the swatch, borders, panels or a side-by-side/collage in the output."
+    )
+
+
 # ====== BẢNG HIỆU QUẢNG CÁO ======
 # Kích thước (cm) phổ biến ở VN -> aspect_ratio gần nhất nano-banana-2 hỗ trợ
 SIGNBOARD_SIZES = {
