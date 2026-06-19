@@ -40,11 +40,12 @@ with col2:
 
 quality = st.radio(
     "Chất lượng ảnh",
-    options=["Tiêu chuẩn", "Chất lượng cao", "Giữ mặt tốt nhất"],
+    options=["Tiêu chuẩn", "Chất lượng cao", "Giữ mặt tốt nhất", "4K siêu nét"],
     horizontal=True,
     help="• Tiêu chuẩn / Chất lượng cao: đổi màu nhanh.\n"
-         "• Giữ mặt tốt nhất: giữ khuôn mặt giống hệt, bám màu swatch sát nhất "
-         "(không phụ thuộc toggle multi-image).",
+         "• Giữ mặt tốt nhất: giữ khuôn mặt giống hệt, bám màu swatch sát nhất.\n"
+         "• 4K siêu nét: như trên nhưng xuất ảnh độ phân giải 4K cho ảnh quảng bá "
+         "(lâu hơn một chút).",
 )
 
 if model_files and swatch_files:
@@ -66,7 +67,8 @@ if run:
         st.stop()
 
     os.environ["REPLICATE_API_TOKEN"] = token
-    use_nano = (quality == "Giữ mặt tốt nhất")
+    use_nano = quality in ("Giữ mặt tốt nhất", "4K siêu nét")
+    nano_hi_res = (quality == "4K siêu nét")
     if use_nano:
         model = None  # Nano Banana có hàm gọi riêng
     elif use_multi:
@@ -100,7 +102,7 @@ if run:
         out_name   = f"{label}_{safe_color}.png"
         if use_nano:
             prompt = build_nano_prompt(color_name, hex_color)
-            run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_nano_banana(mb, sb, p)
+            run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_nano_banana(mb, sb, p, nano_hi_res)
         else:
             prompt = build_prompt(color_name, hex_color, tone, level, use_multi)
             run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_model(model, mb, sb, p, use_multi)

@@ -13,6 +13,7 @@ MODEL_MULTI        = "flux-kontext-apps/multi-image-kontext-pro"
 MODEL_SINGLE       = "black-forest-labs/flux-kontext-pro"
 MODEL_SINGLE_MAX   = "black-forest-labs/flux-kontext-max"
 MODEL_NANO         = "google/nano-banana"
+MODEL_NANO2        = "google/nano-banana-2"
 MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
 MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
 
@@ -179,14 +180,20 @@ def build_nano_prompt(color_name, hex_color):
     )
 
 
-def run_nano_banana(model_bytes, swatch_bytes, prompt):
-    """Nano Banana: nhận list ảnh qua image_input. Ảnh 1 = người mẫu, ảnh 2 = swatch."""
+def run_nano_banana(model_bytes, swatch_bytes, prompt, hi_res=False):
+    """Nano Banana: nhận list ảnh qua image_input. Ảnh 1 = người mẫu, ảnh 2 = swatch.
+    hi_res=True dùng nano-banana-2 và xuất ảnh 4K."""
     inp = {
         "prompt": prompt,
         "image_input": [io.BytesIO(model_bytes), io.BytesIO(swatch_bytes)],
         "output_format": "png",
     }
-    return output_to_bytes(replicate.run(MODEL_NANO, input=inp))
+    if hi_res:
+        inp["resolution"] = "4K"
+        model = MODEL_NANO2
+    else:
+        model = MODEL_NANO
+    return output_to_bytes(replicate.run(model, input=inp))
 
 
 def run_with_retry(fn, max_retries=3, wait_seconds=12):
