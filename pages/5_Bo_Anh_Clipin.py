@@ -7,7 +7,7 @@ import streamlit as st
 from utils import (
     MAX_GENERATIONS, CLOTHING_COLORS,
     color_name_from_filename, extract_dominant_color,
-    run_nano_multi, build_clipin_faceswap, build_nano_highlight_prompt,
+    run_nano_multi, run_nano_banana, build_clipin_faceswap, build_nano_highlight_prompt,
     build_clipin_before, build_clipin_lifestyle_from_after,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
 )
@@ -126,9 +126,9 @@ def run_rest(after_base, before_tmpl, identity_ref, s_bytes,
     if after_base is not None and need_after_gen:
         after_data = gen_step(
             "Ảnh After (recolor lọn)",
-            lambda: run_nano_multi([after_base, s_bytes],
-                                   build_nano_highlight_prompt(color_name, hex_color, "thin"),
-                                   "1:1", hi_res))
+            lambda: run_nano_banana(after_base, s_bytes,
+                                    build_nano_highlight_prompt(color_name, hex_color, "thin"),
+                                    hi_res))
         if want_after and after_data is not None:
             results["after"] = (f"after_{safe_color}.png", after_data)
 
