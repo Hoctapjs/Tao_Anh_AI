@@ -9,8 +9,9 @@ import streamlit as st
 from PIL import Image
 
 # ====== CONSTANTS ======
-MODEL_MULTI    = "flux-kontext-apps/multi-image-kontext-pro"
-MODEL_SINGLE   = "black-forest-labs/flux-kontext-pro"
+MODEL_MULTI        = "flux-kontext-apps/multi-image-kontext-pro"
+MODEL_SINGLE       = "black-forest-labs/flux-kontext-pro"
+MODEL_SINGLE_MAX   = "black-forest-labs/flux-kontext-max"
 MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
 MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
 

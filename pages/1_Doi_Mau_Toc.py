@@ -5,7 +5,7 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS, MODEL_MULTI, MODEL_SINGLE,
+    MAX_GENERATIONS, MODEL_MULTI, MODEL_SINGLE, MODEL_SINGLE_MAX,
     color_name_from_filename, extract_dominant_color,
     label_from_filename, run_model, build_prompt,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
@@ -37,6 +37,13 @@ with col2:
     if swatch_files:
         st.image([f.getvalue() for f in swatch_files], width=110)
 
+quality = st.radio(
+    "Chất lượng ảnh",
+    options=["Tiêu chuẩn", "Chất lượng cao"],
+    horizontal=True,
+    help="Chất lượng cao cho ảnh sắc nét, chi tiết hơn — chỉ áp dụng khi tắt multi-image ở sidebar.",
+)
+
 if model_files and swatch_files:
     total = len(model_files) * len(swatch_files)
     st.info(f"Sẽ tạo **{total} ảnh** ({len(model_files)} người mẫu × {len(swatch_files)} màu tóc) — tốn **{total} lượt**.")
@@ -56,7 +63,12 @@ if run:
         st.stop()
 
     os.environ["REPLICATE_API_TOKEN"] = token
-    model  = MODEL_MULTI if use_multi else MODEL_SINGLE
+    if use_multi:
+        model = MODEL_MULTI
+    elif quality == "Chất lượng cao":
+        model = MODEL_SINGLE_MAX
+    else:
+        model = MODEL_SINGLE
     tasks  = [(m, s) for m in model_files for s in swatch_files]
     total  = len(tasks)
 
