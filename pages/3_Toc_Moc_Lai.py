@@ -38,7 +38,7 @@ with col2:
     if swatch_files:
         st.image([f.getvalue() for f in swatch_files], width=110)
 
-e1, e2 = st.columns([2, 1])
+e1, e2, e3 = st.columns([2, 2, 1])
 with e1:
     engine = st.radio(
         "Công cụ xử lý",
@@ -47,11 +47,18 @@ with e1:
         help="• Giữ mặt tốt nhất: nhận diện & đổi màu lọn chính xác nhất, giữ mặt tốt.\n"
              "• Tiêu chuẩn: nhanh và tiết kiệm hơn.")
 with e2:
+    density_label = st.radio(
+        "Độ dày lọn màu",
+        ["Mảnh (ít tóc giả)", "Bình thường"],
+        horizontal=True,
+        help="Mảnh: giảm bớt lọn màu, đỉnh đầu giữ tóc đen nhiều hơn.")
+with e3:
     hi_res = st.toggle(
         "Xuất 4K siêu nét", value=False,
         help="Chỉ áp dụng cho 'Giữ mặt tốt nhất'. Ảnh độ phân giải cao (lâu hơn một chút).")
 
 use_nano = (engine == "Giữ mặt tốt nhất")
+density   = "thin" if density_label == "Mảnh (ít tóc giả)" else "normal"
 
 if model_files and swatch_files:
     total = len(model_files) * len(swatch_files)
@@ -95,7 +102,7 @@ if run:
         label      = label_from_filename(m_file.name)
         safe_color = color_name.replace(" ", "-")
         out_name   = f"{label}_moclai_{safe_color}.png"
-        prompt     = build_nano_highlight_prompt(color_name, hex_color)
+        prompt     = build_nano_highlight_prompt(color_name, hex_color, density)
         if use_nano:
             run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_nano_banana(mb, sb, p, hi_res)
         else:

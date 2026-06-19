@@ -180,23 +180,36 @@ def build_nano_prompt(color_name, hex_color):
     )
 
 
-def build_nano_highlight_prompt(color_name, hex_color):
+def build_nano_highlight_prompt(color_name, hex_color, density="thin"):
+    if density == "thin":
+        density_rule = (
+            f"IMPORTANT — keep the colored strands MINIMAL and THIN: render them as a few slim, sparse "
+            f"accent strands. Do NOT widen, thicken, expand, multiply or duplicate the colored strands, "
+            f"and do NOT let the color bleed into the surrounding natural hair. "
+            f"Reduce the colored coverage, especially near the crown, the part line and the top of the "
+            f"head — most of the hair there must stay natural dark, with only a few thin colored strands "
+            f"showing. The overall amount of colored hair should look lighter and more delicate than a "
+            f"thick block of color. "
+        )
+    else:
+        density_rule = (
+            f"Keep the colored strands roughly the same amount and thickness as the existing colored "
+            f"strands in the first image — do NOT widen or expand them, and do NOT let the color bleed "
+            f"into the surrounding natural hair. "
+        )
+
     return (
         f"In the first image, the person already has brightly colored clip-in hair extension strands "
         f"(unnatural dyed color, e.g. blue/green/pink) woven into their natural dark hair. "
-        f"Identify ALL of these colored extension strands — find EVERY single strand or pixel that is NOT "
-        f"a natural hair color, anywhere in the hair: near the crown, the part line, the roots at the "
-        f"scalp, the top of the head, the sides, AND all the way down to the tips. "
-        f"Recolor ALL of those existing colored strands so they EXACTLY match the color shown in the "
-        f"second image (the color swatch): {color_name}, hex {hex_color}. "
+        f"Identify the existing colored extension strands and recolor them so they EXACTLY match the "
+        f"color shown in the second image (the color swatch): {color_name}, hex {hex_color}. "
         f"CRITICAL: replace the old extension color 100% completely — there must be NO trace, patch, "
-        f"streak or pixel of the original color (such as blue) left anywhere in the final image, "
-        f"including the short strands near the crown and roots. Every part of every colored strand, "
-        f"from the scalp down to the very tip, must become the exact uniform color {hex_color}. "
+        f"streak or pixel of the original color (such as blue) left anywhere in the final image. "
+        f"Every part of every remaining colored strand, from where it starts down to the very tip, "
+        f"must become the exact uniform color {hex_color}. "
         f"Match the exact hue, saturation and brightness of {hex_color} — do NOT make the strands "
         f"lighter, brighter, more neon or more saturated than the swatch color. "
-        f"Keep the EXACT same strands in the EXACT same position, shape, length and amount as in the "
-        f"first image — do NOT add, remove, move or reshape any strand; only change their color. "
+        f"{density_rule}"
         f"Keep the person's natural (dark) hair color, face, skin, facial features, expression, pose, "
         f"framing and background completely unchanged. Do NOT recolor the natural hair. "
         f"Photorealistic, high detail. "
