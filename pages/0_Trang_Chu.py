@@ -73,5 +73,17 @@ AI sẽ thiết kế bảng hiệu với chữ tiếng Việt, theo các nguyên
     """)
     st.page_link("pages/4_Bang_Hieu.py", label="Đến trang Tạo bảng hiệu →", icon="🪧")
 
+c6, _ = st.columns(2)
+with c6:
+    st.markdown("### 🔍 Upscale ảnh siêu nét")
+    st.markdown("""
+Upload **nhiều ảnh cùng lúc** — AI phóng to và làm sắc nét (2x → 10x).
+
+Tùy chọn **tăng cường khuôn mặt** (GFPGAN) nếu ảnh có người. Tải về từng ảnh hoặc cả bộ ZIP.
+
+**Phù hợp khi:** ảnh sản phẩm/model bị nhỏ hoặc mờ, cần tăng chất lượng trước khi dùng.
+    """)
+    st.page_link("pages/6_Upscale.py", label="Đến trang Upscale ảnh →", icon="🔍")
+
 st.divider()
-st.caption("Quota 50 lần dùng chung cho cả 5 tính năng.")
+st.caption("Quota 50 lần dùng chung cho cả 6 tính năng.")

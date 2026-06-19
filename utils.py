@@ -17,6 +17,7 @@ MODEL_NANO2        = "google/nano-banana-2"
 MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
 MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
 MODEL_SIGNBOARD      = "ideogram-ai/ideogram-v3-quality"
+MODEL_UPSCALE        = "nightmareai/real-esrgan"
 
 MAX_GENERATIONS = 50
 INITIAL_USED    = 16
@@ -496,6 +497,21 @@ def run_signboard_model(prompt, aspect_ratio="4:5"):
         "output_format": "png",
     }
     return output_to_bytes(replicate.run(MODEL_NANO2, input=inp))
+
+
+def run_upscale_model(image_bytes, scale=4, face_enhance=False):
+    """Upscale ảnh bằng Real-ESRGAN. scale: 1-10 (default 4x). face_enhance: GFPGAN."""
+    inp = {
+        "image": io.BytesIO(image_bytes),
+        "scale": scale,
+        "face_enhance": face_enhance,
+    }
+    result = replicate.run(MODEL_UPSCALE, input=inp)
+    if hasattr(result, "read"):
+        return result.read()
+    if isinstance(result, str):
+        return requests.get(result, timeout=60).content
+    return result
 
 
 def run_with_retry(fn, max_retries=3, wait_seconds=12):
