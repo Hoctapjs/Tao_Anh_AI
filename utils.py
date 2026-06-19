@@ -390,21 +390,24 @@ def build_clipin_before(clothing_en="", match_identity=True):
         identity = (
             "The first image is the FACE, IDENTITY AND OUTFIT SOURCE — keep this person's face, skin tone, "
             "hair color, hair texture AND clothing/outfit EXACTLY as shown in the first image. "
-            "Do NOT change the face or the outfit at all. "
+            "Copy every detail of the outfit: the exact same garment style, neckline, sleeve length, "
+            "fabric and color — do NOT add, remove or change any detail of the clothing. "
             "The second image is the POSE AND COMPOSITION REFERENCE only — adapt the body pose, "
             "framing and background from the second image, but keep the face and clothing entirely from "
             "the first image. "
-            "The result must look unmistakably like the SAME person wearing the SAME outfit as in the first image. "
+            "The result must look unmistakably like the SAME person wearing the IDENTICAL outfit as in the first image. "
         )
+        clothing_override = ""
     else:
         identity = "Keep the person's own face and identity unchanged. "
+        clothing_override = _clothing_rule(clothing_en)
     return (
         f"This is the BEFORE photo. {identity}"
         f"Give her {_EXPR['gentle']}. Her head and face are turned forward, aligned with her body — NOT turned sideways or in profile. "
         f"Her hair must be completely NATURAL with NO colored highlight strands at all — "
         f"remove every single colored strand. Keep her OWN natural hair color exactly as in the first image "
         f"(keep blonde hair blonde — do NOT darken or change the hair color). "
-        f"{_clothing_rule(clothing_en)}"
+        f"{clothing_override}"
         f"Keep the hairstyle, hair length, hair texture from the first image. "
         f"Photorealistic, high-end editorial fashion photo, natural, sharp. "
         f"Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
