@@ -5,9 +5,10 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS, MODEL_TEXT2IMG, MODEL_TEXT2IMG_ULTRA,
+    MAX_GENERATIONS,
     color_name_from_filename, extract_dominant_color,
     label_from_filename, run_text2img_model, build_text2img_prompt,
+    run_nano_text2img, build_nano_text2img_prompt,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
 )
 
@@ -41,9 +42,11 @@ with col2:
         "Chất lượng ảnh",
         options=["Tiêu chuẩn", "Chất lượng cao"],
         horizontal=True,
-        help="Chất lượng cao cho ảnh sắc nét, chi tiết hơn — tốn 2 lượt/ảnh.",
+        help="• Tiêu chuẩn: nhanh.\n"
+             "• Chất lượng cao: bám màu swatch sát hơn, xuất ảnh 4K cho quảng bá "
+             "(lâu hơn một chút).",
     )
-    selected_model = MODEL_TEXT2IMG_ULTRA if quality == "Chất lượng cao" else MODEL_TEXT2IMG
+    use_nano = (quality == "Chất lượng cao")
 
     # Action presets phổ biến cho chụp ảnh demo tóc giả
     ACTION_PRESETS = {
@@ -117,14 +120,20 @@ if run:
         hex_color, tone, level = extract_dominant_color(s_bytes)
         safe_color = color_name.replace(" ", "-")
         out_name   = f"generated_{safe_color}.png"
-        prompt     = build_text2img_prompt(
-            color_name, hex_color, tone, level,
-            ethnicity, gender, hair_length, action)
+        if use_nano:
+            prompt = build_nano_text2img_prompt(
+                color_name, hex_color, ethnicity, gender, hair_length, action)
+            run_fn = lambda sb=s_bytes, p=prompt: run_nano_text2img(sb, p, hi_res=True)
+        else:
+            prompt = build_text2img_prompt(
+                color_name, hex_color, tone, level,
+                ethnicity, gender, hair_length, action)
+            run_fn = lambda p=prompt: run_text2img_model(p)
 
         with st.status(f"[{i}/{total}] Tạo người mẫu tóc {color_name} ({hex_color})",
                        expanded=False) as status:
             try:
-                data = run_with_retry(lambda: run_text2img_model(prompt, selected_model))
+                data = run_with_retry(run_fn)
                 used      += 1
                 remaining  = MAX_GENERATIONS - used
                 save_used(used)

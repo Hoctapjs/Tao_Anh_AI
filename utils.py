@@ -196,6 +196,50 @@ def run_nano_banana(model_bytes, swatch_bytes, prompt, hi_res=False):
     return output_to_bytes(replicate.run(model, input=inp))
 
 
+def build_nano_text2img_prompt(color_name, hex_color, ethnicity, gender,
+                               hair_length, action=""):
+    ethnicity_map   = {"Châu Á": "East Asian", "Da trắng": "Caucasian", "Da đen": "Black"}
+    gender_map      = {"Nữ": "woman", "Nam": "man"}
+    hair_length_map = {"Dài": "long", "Ngắn": "short", "Trung bình": "medium-length"}
+
+    e = ethnicity_map.get(ethnicity, ethnicity)
+    g = gender_map.get(gender, gender)
+    h = hair_length_map.get(hair_length, hair_length)
+    action_part = f" The model is {action.strip()}." if action and action.strip() else ""
+
+    return (
+        f"Generate a brand-new photorealistic commercial product portrait of a {g} {e} hair model "
+        f"wearing a wig, with {h} hair.{action_part} "
+        f"Use the attached image as the EXACT hair color reference — the wig hair color must match "
+        f"that color swatch precisely ({color_name}, hex {hex_color}). "
+        f"This is a wig advertisement, so hair color accuracy is critical: every strand from the roots "
+        f"at the scalp and hairline all the way to the tips must be this exact uniform color. "
+        f"No dark roots, no shadow at the hairline, no skin-colored roots, no parting line in a different "
+        f"color, no ombre, no gradient, no highlights or lowlights. "
+        f"The model's face is a completely new invented person (do NOT copy any face from the reference image; "
+        f"it is only a color sample, not a person). "
+        f"Professional studio lighting that shows the true hair color, neutral grey background, "
+        f"high-end beauty photography, ultra detailed. EXACTLY ONE person in the frame, clean single portrait."
+    )
+
+
+def run_nano_text2img(swatch_bytes, prompt, hi_res=False):
+    """Sinh người mẫu mới bằng Nano Banana, dùng swatch làm tham chiếu màu.
+    hi_res=True dùng nano-banana-2 và xuất ảnh 4K."""
+    inp = {
+        "prompt": prompt,
+        "image_input": [io.BytesIO(swatch_bytes)],
+        "aspect_ratio": "2:3",
+        "output_format": "png",
+    }
+    if hi_res:
+        inp["resolution"] = "4K"
+        model = MODEL_NANO2
+    else:
+        model = MODEL_NANO
+    return output_to_bytes(replicate.run(model, input=inp))
+
+
 def run_with_retry(fn, max_retries=3, wait_seconds=12):
     """Tự retry khi bị lỗi 429 rate limit, tối đa max_retries lần."""
     import time
