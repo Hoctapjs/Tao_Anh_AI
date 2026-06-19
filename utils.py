@@ -365,8 +365,9 @@ def build_clipin_faceswap(ethnicity, gender, clothing_en="", expression="confide
     expr = _EXPR.get(expression, _EXPR["neutral"])
     eth_detail = _ETH_DETAIL.get(e, "")
     return (
-        f"COMPLETELY replace the face and full identity of the person in this image with a brand-new, "
-        f"totally DIFFERENT invented {g} who is CLEARLY and UNMISTAKABLY {e}. "
+        f"The image is a TEMPLATE providing only the pose, hair, clothing and background. "
+        f"COMPLETELY discard the original face and replace it with a brand-new invented {g} who is "
+        f"CLEARLY and UNMISTAKABLY {e}. Treat the template face as irrelevant — invent a fully new person. "
         f"The new face MUST have {eth_detail}. "
         f"Make it IMPOSSIBLE to recognize the original person — every single facial feature must change: "
         f"face shape, forehead, eye shape and spacing, nose bridge and tip, lip shape, jawline, chin, "
@@ -387,10 +388,13 @@ def build_clipin_before(clothing_en="", match_identity=True):
     từ ảnh thứ 2 (ảnh After) để cùng 1 người; biểu cảm nhẹ nhàng + đổi màu áo."""
     if match_identity:
         identity = (
-            "The first image is the BEFORE pose/composition. The second image shows the TARGET person whose "
-            "face and identity you must use. Make the person in the first image have the EXACT SAME face and "
-            "identity as the model in the second image — clearly the same person, so the before and after "
-            "photos are obviously the same model. "
+            "The first image provides the POSE, BODY FRAMING, HAIR and BACKGROUND to use. "
+            "The second image is the FACE DONOR — you must COMPLETELY REPLACE the face in the first image "
+            "with the face from the second image. Transplant the exact face, facial features, skin tone and "
+            "identity from the second image onto the body/pose of the first image. "
+            "The result must look unmistakably like the SAME person as in the second image — "
+            "do NOT blend or average the two faces, do NOT keep any feature of the first image's face. "
+            "The body, hair, pose and background come from image 1; the face comes entirely from image 2. "
         )
     else:
         identity = "Keep the person's own face and identity unchanged. "
