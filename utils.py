@@ -17,6 +17,7 @@ MODEL_TEXT2IMG       = "black-forest-labs/flux-1.1-pro"
 MODEL_TEXT2IMG_ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
 MODEL_SIGNBOARD      = "ideogram-ai/ideogram-v3-quality"
 MODEL_UPSCALE        = "nightmareai/real-esrgan"
+MODEL_FLUX2          = "black-forest-labs/flux-2-pro"
 
 
 # ====== IMAGE UTILS ======
@@ -267,6 +268,18 @@ def run_nano_banana(model_bytes, swatch_bytes, prompt, hi_res=False):
     else:
         model = MODEL_NANO
     return output_to_bytes(replicate.run(model, input=inp))
+
+
+def run_flux2(images_bytes, prompt, aspect_ratio="match_input_image"):
+    """FLUX 2 Pro: img2img, nhận list ảnh qua input_images (tối đa 8).
+    aspect_ratio mặc định bám theo ảnh đầu vào."""
+    inp = {
+        "prompt": prompt,
+        "input_images": [io.BytesIO(b) for b in images_bytes],
+        "aspect_ratio": aspect_ratio,
+        "output_format": "png",
+    }
+    return output_to_bytes(replicate.run(MODEL_FLUX2, input=inp))
 
 
 def build_nano_text2img_prompt(color_name, hex_color, ethnicity, gender,

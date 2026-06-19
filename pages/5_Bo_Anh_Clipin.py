@@ -7,7 +7,7 @@ import streamlit as st
 from utils import (
     CLOTHING_COLORS, MODEL_SINGLE_MAX,
     color_name_from_filename, extract_dominant_color,
-    run_nano_multi, run_nano_banana, run_model,
+    run_nano_multi, run_nano_banana, run_model, run_flux2,
     build_clipin_faceswap, build_nano_highlight_prompt,
     build_clipin_before, build_clipin_lifestyle_from_after,
     render_sidebar, run_with_retry,
@@ -74,17 +74,17 @@ with col2:
 
     after_engine = st.radio(
         "Engine recolor lọn (ảnh After)",
-        ["nano-banana", "FLUX Kontext Max (giữ texture)"],
+        ["nano-banana", "FLUX Kontext Max", "FLUX 2 Pro"],
         horizontal=True,
         help="• nano-banana: bám màu tốt theo swatch, hỗ trợ 4K.\n"
-             "• FLUX Kontext Max: giữ texture/sáng-tối lọn tự nhiên hơn, ít bị tô phẳng "
-             "(màu theo mã hex, không 4K).")
+             "• FLUX Kontext Max: giữ texture lọn tự nhiên hơn (màu theo hex, không 4K).\n"
+             "• FLUX 2 Pro: model mới, chất lượng cao, img2img (màu theo hex).")
 
 # Số ảnh cần tạo
 need_after_gen = want_after or want_lifestyle
 any_selected   = want_after or want_before or want_lifestyle
 need_swap      = change_face and any_selected
-use_flux_after = after_engine.startswith("FLUX")
+after_eng      = after_engine  # "nano-banana" | "FLUX Kontext Max" | "FLUX 2 Pro"
 
 
 # ===== Helpers =====
@@ -115,11 +115,15 @@ def run_rest(after_base, before_tmpl, identity_ref, s_bytes,
 
     after_data = None
     if after_base is not None and need_after_gen:
-        if use_flux_after:
-            # FLUX Kontext Max single-image: không có ảnh swatch nên không bị dán collage
+        if after_eng == "FLUX Kontext Max":
+            # single-image: không có ảnh swatch nên không bị dán collage
             recolor_prompt = build_nano_highlight_prompt(color_name, hex_color, "thin",
                                                          with_swatch=False)
             run_after = lambda: run_model(MODEL_SINGLE_MAX, after_base, None, recolor_prompt, False)
+        elif after_eng == "FLUX 2 Pro":
+            recolor_prompt = build_nano_highlight_prompt(color_name, hex_color, "thin",
+                                                         with_swatch=False)
+            run_after = lambda: run_flux2([after_base], recolor_prompt)
         else:
             recolor_prompt = build_nano_highlight_prompt(color_name, hex_color, "thin")
             run_after = lambda: run_nano_banana(after_base, s_bytes, recolor_prompt, hi_res)
