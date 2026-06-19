@@ -388,11 +388,13 @@ def build_clipin_before(clothing_en="", match_identity=True):
     Giữ nguyên mặt từ ảnh 1, đổi sang dáng/pose của ảnh 2, xóa lọn màu."""
     if match_identity:
         identity = (
-            "The first image is the FACE AND IDENTITY SOURCE — keep this person's face, skin tone, "
-            "hair color and hair texture EXACTLY as shown. Do NOT change the face at all. "
+            "The first image is the FACE, IDENTITY AND OUTFIT SOURCE — keep this person's face, skin tone, "
+            "hair color, hair texture AND clothing/outfit EXACTLY as shown in the first image. "
+            "Do NOT change the face or the outfit at all. "
             "The second image is the POSE AND COMPOSITION REFERENCE only — adapt the body pose, "
-            "framing and background from the second image, but keep the face entirely from the first image. "
-            "The result must look unmistakably like the SAME person as in the first image. "
+            "framing and background from the second image, but keep the face and clothing entirely from "
+            "the first image. "
+            "The result must look unmistakably like the SAME person wearing the SAME outfit as in the first image. "
         )
     else:
         identity = "Keep the person's own face and identity unchanged. "
