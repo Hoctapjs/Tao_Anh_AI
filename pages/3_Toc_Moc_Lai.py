@@ -5,9 +5,9 @@ from datetime import datetime
 
 import streamlit as st
 from utils import (
-    MAX_GENERATIONS,
+    MAX_GENERATIONS, MODEL_MULTI,
     color_name_from_filename, extract_dominant_color,
-    label_from_filename, run_nano_banana, build_nano_highlight_prompt,
+    label_from_filename, run_nano_banana, run_model, build_nano_highlight_prompt,
     render_quota_bar, render_sidebar, save_used, run_with_retry,
 )
 
@@ -38,9 +38,20 @@ with col2:
     if swatch_files:
         st.image([f.getvalue() for f in swatch_files], width=110)
 
-hi_res = st.toggle(
-    "Xuất 4K siêu nét", value=False,
-    help="Bật: ảnh độ phân giải cao cho quảng bá (lâu hơn một chút).")
+e1, e2 = st.columns([2, 1])
+with e1:
+    engine = st.radio(
+        "Công cụ xử lý",
+        ["Giữ mặt tốt nhất", "Tiêu chuẩn (rẻ hơn)"],
+        horizontal=True,
+        help="• Giữ mặt tốt nhất: nhận diện & đổi màu lọn chính xác nhất, giữ mặt tốt.\n"
+             "• Tiêu chuẩn: nhanh và tiết kiệm hơn.")
+with e2:
+    hi_res = st.toggle(
+        "Xuất 4K siêu nét", value=False,
+        help="Chỉ áp dụng cho 'Giữ mặt tốt nhất'. Ảnh độ phân giải cao (lâu hơn một chút).")
+
+use_nano = (engine == "Giữ mặt tốt nhất")
 
 if model_files and swatch_files:
     total = len(model_files) * len(swatch_files)
@@ -85,7 +96,10 @@ if run:
         safe_color = color_name.replace(" ", "-")
         out_name   = f"{label}_moclai_{safe_color}.png"
         prompt     = build_nano_highlight_prompt(color_name, hex_color)
-        run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_nano_banana(mb, sb, p, hi_res)
+        if use_nano:
+            run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_nano_banana(mb, sb, p, hi_res)
+        else:
+            run_fn = lambda mb=m_bytes, sb=s_bytes, p=prompt: run_model(MODEL_MULTI, mb, sb, p, True)
 
         with st.status(f"[{i}/{total}] {label} + móc lai {color_name} ({hex_color})",
                        expanded=False) as status:
