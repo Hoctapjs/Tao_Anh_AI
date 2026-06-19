@@ -407,7 +407,7 @@ def build_clipin_before(clothing_en="", match_identity=True):
         clothing_override = _clothing_rule(clothing_en)
     return (
         f"This is the BEFORE photo. {identity}"
-        f"Give her {_EXPR['gentle']}. Her head and face are turned forward, aligned with her body — NOT turned sideways or in profile. "
+        f"CHANGE her expression to: {_EXPR['gentle']} — do NOT keep the smiling or happy expression from the first image, replace it completely with this calm serene look. Her head and face are turned forward, aligned with her body — NOT turned sideways or in profile. "
         f"Her hair must be completely NATURAL with NO colored highlight strands at all — "
         f"remove every single colored strand. Keep her OWN natural hair color exactly as in the first image "
         f"(keep blonde hair blonde — do NOT darken or change the hair color). "
