@@ -193,11 +193,19 @@ def build_nano_highlight_prompt(color_name, hex_color):
         f"streak or pixel of the original color (such as blue) left anywhere in the final image, "
         f"including the short strands near the crown and roots. Every part of every colored strand, "
         f"from the scalp down to the very tip, must become the exact uniform color {hex_color}. "
+        f"Match the exact hue, saturation and brightness of {hex_color} — do NOT make the strands "
+        f"lighter, brighter, more neon or more saturated than the swatch color. "
         f"Keep the EXACT same strands in the EXACT same position, shape, length and amount as in the "
         f"first image — do NOT add, remove, move or reshape any strand; only change their color. "
         f"Keep the person's natural (dark) hair color, face, skin, facial features, expression, pose, "
         f"framing and background completely unchanged. Do NOT recolor the natural hair. "
-        f"Photorealistic, high detail. Output a single portrait of this one person."
+        f"Photorealistic, high detail. "
+        f"CRITICAL COMPOSITION RULES: The output must be ONLY the single edited portrait of this one "
+        f"person, with the EXACT same framing, crop and zoom as the first image. "
+        f"Do NOT include the second image (the color swatch), and do NOT paste, append or show the swatch, "
+        f"any reference image, borders, or extra panels anywhere in the output. "
+        f"Do NOT create a side-by-side, split-screen, diptych, collage, grid or two-panel image. "
+        f"There must be exactly ONE person and ONE photo in the result — just the clean edited portrait."
     )
 
 
