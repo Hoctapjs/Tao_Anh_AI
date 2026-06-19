@@ -371,7 +371,6 @@ def build_clipin_faceswap(ethnicity, gender, clothing_en="", expression="confide
         f"Make it IMPOSSIBLE to recognize the original person — every single facial feature must change: "
         f"face shape, forehead, eye shape and spacing, nose bridge and tip, lip shape, jawline, chin, "
         f"cheekbones and brow arch. The result must look like a COMPLETELY DIFFERENT human being. "
-        f"DO NOT keep any Western/American/Caucasian features if the target ethnicity is {e}. "
         f"Give her {expr}. "
         f"{_clothing_rule(clothing_en)}"
         f"Keep EVERYTHING else identical to the original image: the exact same hairstyle, the SAME natural "
