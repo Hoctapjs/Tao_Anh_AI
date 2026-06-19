@@ -384,29 +384,26 @@ def build_clipin_faceswap(ethnicity, gender, clothing_en="", expression="confide
 
 
 def build_clipin_before(clothing_en="", match_identity=True):
-    """Ảnh Before từ before-template (tóc tự nhiên). match_identity=True: lấy gương mặt
-    từ ảnh thứ 2 (ảnh After) để cùng 1 người; biểu cảm nhẹ nhàng + đổi màu áo."""
+    """Ảnh Before: ảnh 1 = doimat_goc (face source), ảnh 2 = before-template (pose ref).
+    Giữ nguyên mặt từ ảnh 1, đổi sang dáng/pose của ảnh 2, xóa lọn màu."""
     if match_identity:
         identity = (
-            "The first image provides the POSE, BODY FRAMING, HAIR and BACKGROUND to use. "
-            "The second image is the FACE DONOR — you must COMPLETELY REPLACE the face in the first image "
-            "with the face from the second image. Transplant the exact face, facial features, skin tone and "
-            "identity from the second image onto the body/pose of the first image. "
-            "The result must look unmistakably like the SAME person as in the second image — "
-            "do NOT blend or average the two faces, do NOT keep any feature of the first image's face. "
-            "The body, hair, pose and background come from image 1; the face comes entirely from image 2. "
+            "The first image is the FACE AND IDENTITY SOURCE — keep this person's face, skin tone, "
+            "hair color and hair texture EXACTLY as shown. Do NOT change the face at all. "
+            "The second image is the POSE AND COMPOSITION REFERENCE only — adapt the body pose, "
+            "framing and background from the second image, but keep the face entirely from the first image. "
+            "The result must look unmistakably like the SAME person as in the first image. "
         )
     else:
         identity = "Keep the person's own face and identity unchanged. "
     return (
         f"This is the BEFORE photo. {identity}"
         f"Give her {_EXPR['gentle']}. "
-        f"Her hair must be completely NATURAL with NO colored highlight strands at all. Keep her OWN natural "
-        f"hair color exactly as in the first image (for example keep blonde hair blonde — do NOT darken or "
-        f"change the hair color). "
+        f"Her hair must be completely NATURAL with NO colored highlight strands at all — "
+        f"remove every single colored strand. Keep her OWN natural hair color exactly as in the first image "
+        f"(keep blonde hair blonde — do NOT darken or change the hair color). "
         f"{_clothing_rule(clothing_en)}"
-        f"Keep the first image's pose, hairstyle, hair color, hair length, hair texture, framing and "
-        f"background. "
+        f"Keep the hairstyle, hair length, hair texture from the first image. "
         f"Photorealistic, high-end editorial fashion photo, natural, sharp. "
         f"Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
         f"Do NOT add borders, panels or a side-by-side/collage in the output."
