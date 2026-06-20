@@ -130,19 +130,18 @@ def render_stage_mode():
 
     # ---- GĐ 3: Ảnh Before ----
     elif stage.startswith("3"):
-        st.caption("Đầu vào: ảnh After (nguồn gương mặt + áo) + template Before (lấy dáng). "
-                   "Đầu ra: ảnh Before tóc tự nhiên, cùng gương mặt.")
-        after_img   = st.file_uploader("Ảnh After (nguồn gương mặt + áo)", type=UP_TYPES, key="s3_after")
-        before_tmpl = st.file_uploader("Template Before (lấy dáng/pose)", type=UP_TYPES, key="s3_tmpl")
-        clo = st.selectbox("Màu áo (giữ nguyên áo từ ảnh After)", list(CLOTHING_COLORS.keys()), key="s3_clo")
+        st.caption("Đầu vào: chỉ ảnh After. App sửa thẳng ảnh After: xóa lọn màu về tóc gốc, "
+                   "đổi biểu cảm nhẹ + dáng thư giãn (tay buông xuôi). Giữ nguyên người + áo.")
+        after_img = st.file_uploader("Ảnh After (đã có lọn màu)", type=UP_TYPES, key="s3_after")
+        clo = st.selectbox("Màu áo (mặc định giữ nguyên áo từ After)", list(CLOTHING_COLORS.keys()), key="s3_clo")
         hr  = st.toggle("Xuất 4K siêu nét", value=False, key="s3_hr")
         if st.button("🚀 Tạo ảnh Before", type="primary", use_container_width=True):
-            if not after_img or not before_tmpl:
-                st.error("Cần ảnh After + template Before."); st.stop()
+            if not after_img:
+                st.error("Cần ảnh After."); st.stop()
             _need_token()
             out = _stage_status(
                 "Ảnh Before",
-                lambda: run_nano_multi([after_img.getvalue(), before_tmpl.getvalue()],
+                lambda: run_nano_multi([after_img.getvalue()],
                                        build_clipin_before(CLOTHING_COLORS[clo], True),
                                        "1:1", hr))
             if out:
@@ -203,26 +202,22 @@ st.divider()
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("1️⃣ Template Before (tóc tự nhiên)")
-    before_tmpl_file = st.file_uploader(
-        "Ảnh model tóc tự nhiên, chưa gắn clip — lấy dáng/bố cục cho ảnh Before",
-        type=["png", "jpg", "jpeg", "webp"], key="ci_before_tmpl")
-    if before_tmpl_file:
-        st.image(before_tmpl_file.getvalue(), width=140)
-
-    st.subheader("2️⃣ Template After (đã gắn clip)")
+    st.subheader("1️⃣ Template After (đã gắn clip)")
     after_tmpl_file = st.file_uploader(
         "Ảnh model đã gắn clip highlight thật — lấy dáng/lọn cho ảnh After",
         type=["png", "jpg", "jpeg", "webp"], key="ci_after_tmpl")
     if after_tmpl_file:
         st.image(after_tmpl_file.getvalue(), width=140)
 
-    st.subheader("3️⃣ Swatch màu highlight")
+    st.subheader("2️⃣ Swatch màu highlight")
     swatch_file = st.file_uploader(
         "Swatch màu (đặt tên kiểu 2-pink.png)",
         type=["png", "jpg", "jpeg", "webp"], key="ci_swatch")
     if swatch_file:
         st.image(swatch_file.getvalue(), width=140)
+    st.caption("ℹ️ Ảnh Before được tạo bằng cách sửa thẳng ảnh After (xóa lọn + đổi dáng), "
+               "không cần template Before nữa.")
+    before_tmpl_file = None
 
 with col2:
     st.subheader("4️⃣ Gương mặt & trang phục")
@@ -313,18 +308,18 @@ def run_rest(after_base, before_tmpl, identity_ref, s_bytes,
         if want_after and after_data is not None:
             results["after"] = (f"after_{safe_color}.png", after_data)
 
-    if before_tmpl is not None and want_before:
-        match = change_face and identity_ref is not None
-        # ảnh 1 = after (face+outfit đã confirm), ảnh 2 = before_tmpl (pose ref)
-        # fallback về identity_ref nếu after chưa được tạo
-        face_src = after_data if after_data is not None else identity_ref
-        imgs = [face_src, before_tmpl] if match else [before_tmpl]
-        b = gen_step("Ảnh Before (tóc tự nhiên)",
-                     lambda: run_nano_multi(imgs,
-                                            build_clipin_before(clothing_en, match),
-                                            "1:1", hi_res))
-        if b is not None:
-            results["before"] = (f"before_{safe_color}.png", b)
+    if want_before:
+        # Before = sửa thẳng ảnh After (1 ảnh): xóa lọn + đổi dáng/biểu cảm
+        before_src = after_data if after_data is not None else identity_ref
+        if before_src is None:
+            before_src = after_base
+        if before_src is not None:
+            b = gen_step("Ảnh Before (tóc tự nhiên)",
+                         lambda: run_nano_multi([before_src],
+                                                build_clipin_before(clothing_en, True),
+                                                "1:1", hi_res))
+            if b is not None:
+                results["before"] = (f"before_{safe_color}.png", b)
 
     if after_data is not None and want_lifestyle:
         l = gen_step("Ảnh Lifestyle (tạo dáng)",
@@ -421,16 +416,12 @@ if use_review:
             if not swatch_file:
                 st.error("Cần ảnh swatch màu highlight để chạy tiếp.")
                 st.stop()
-            if want_before and not before_tmpl_file:
-                st.error("Cần ảnh Template Before để tạo ảnh Before.")
-                st.stop()
             if not any_selected:
                 st.error("Chọn ít nhất 1 ảnh cần tạo.")
                 st.stop()
             os.environ["REPLICATE_API_TOKEN"] = token
             s_bytes, color_name, hex_color, safe_color = swatch_info()
-            before_tmpl = before_tmpl_file.getvalue() if before_tmpl_file else None
-            results = run_rest(pending, before_tmpl, pending, s_bytes,
+            results = run_rest(pending, None, pending, s_bytes,
                                color_name, hex_color, safe_color, swap_bytes=pending)
             del st.session_state["ci_swap_bytes"]
             st.success(f"Hoàn thành! Tạo được {len(results)} ảnh.")
@@ -449,16 +440,12 @@ else:
         if not swatch_file:
             st.error("Cần ảnh swatch màu highlight.")
             st.stop()
-        if want_before and not before_tmpl_file:
-            st.error("Cần ảnh Template Before để tạo ảnh Before.")
-            st.stop()
         if not any_selected:
             st.error("Chọn ít nhất 1 ảnh cần tạo.")
             st.stop()
 
         os.environ["REPLICATE_API_TOKEN"] = token
         s_bytes, color_name, hex_color, safe_color = swatch_info()
-        before_tmpl = before_tmpl_file.getvalue() if before_tmpl_file else None
 
         after_base   = after_tmpl_file.getvalue()
         swap_bytes   = None
@@ -468,7 +455,7 @@ else:
             after_base   = swap_bytes      # None nếu lỗi
             identity_ref = swap_bytes
 
-        results = run_rest(after_base, before_tmpl, identity_ref, s_bytes,
+        results = run_rest(after_base, None, identity_ref, s_bytes,
                            color_name, hex_color, safe_color, swap_bytes=swap_bytes)
         st.success(f"Hoàn thành! Tạo được {len(results)} ảnh.")
         show_results(results)

@@ -424,44 +424,27 @@ def build_clipin_faceswap(ethnicity, gender, clothing_en="", expression="confide
 
 
 def build_clipin_before(clothing_en="", match_identity=True):
-    """Ảnh Before: ảnh 1 = doimat_goc (face source), ảnh 2 = before-template (pose ref).
-    Giữ nguyên mặt từ ảnh 1, đổi sang dáng/pose của ảnh 2, xóa lọn màu."""
-    if match_identity:
-        return (
-            f"Create a BEFORE product photo based on the FIRST image. You MUST make TWO REQUIRED CHANGES to "
-            f"the first image (do NOT just copy the first image unchanged), while keeping it the SAME woman:\n"
-            f"CHANGE 1 — REMOVE ALL COLORED HIGHLIGHTS: her hair must become COMPLETELY ONE single natural "
-            f"color with ABSOLUTELY NO colored highlight strands. Erase every pink/blue/green/red/colored "
-            f"extension strand 100% — leave NO trace, streak or tint of any unnatural color anywhere. Every "
-            f"strand from roots to tips is her ONE natural base color (the natural hair color from the first "
-            f"image — if blonde keep blonde, if dark brown keep dark brown). The before hair must look like "
-            f"she is NOT wearing any colored extensions at all — just plain natural hair. This is mandatory.\n"
-            f"CHANGE 2 — ADOPT THE SECOND IMAGE'S POSE: change her body posture, torso turn and arm/hand "
-            f"position to MATCH the pose shown in the SECOND image. Do NOT keep her pose from the first image. "
-            f"If the second image shows her arms relaxed straight down at her sides, then put her arms down at "
-            f"her sides too; copy the second image's body posture and arm placement exactly. The resulting "
-            f"pose must visibly differ from the first image and clearly match the second image.\n"
-            f"KEEP THE SAME PERSON: her face, facial features, skin tone, natural hair color, hair length and "
-            f"her outfit/clothing stay EXACTLY as in the FIRST image. The SECOND image is ONLY a pose "
-            f"reference — its woman is a completely different, unrelated person; do NOT copy her face, skin "
-            f"tone, hair color, hairstyle or clothing, borrow ONLY her body pose. The result must look "
-            f"unmistakably like the SAME woman as the FIRST image. "
-            f"Expression: {_EXPR['gentle']} — replace any big smile from the first image with this calm look. "
-            f"Her head and face turned forward, aligned with her body. "
-            f"Photorealistic, high-end editorial fashion photo, natural, sharp. "
-            f"Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
-            f"Do NOT add borders, panels or a side-by-side/collage in the output."
-        )
-    # match_identity=False: 1 ảnh, giữ mặt, chỉ xóa lọn + đổi màu áo
+    """Ảnh Before: chỉ 1 ảnh (ảnh After). Giữ nguyên người, XÓA lọn màu về tóc gốc,
+    đổi biểu cảm nhẹ nhàng và đổi sang dáng thư giãn (tả bằng chữ)."""
     return (
-        f"This is the BEFORE photo. Keep the person's own face and identity unchanged. "
-        f"CHANGE her expression to: {_EXPR['gentle']}. Her head and face are turned forward. "
-        f"Her hair must be COMPLETELY ONE SINGLE natural color with ABSOLUTELY NO colored highlight strands "
-        f"— remove every single colored extension strand 100%, leaving NO trace anywhere. Keep her natural "
-        f"base color exactly as in the first image. "
+        f"Edit THIS photo to create a BEFORE product photo of the SAME woman. Keep her exact face, facial "
+        f"features, skin tone, natural hair color, hair length, hair texture and her outfit/clothing — she "
+        f"stays unmistakably the same person. Make these changes:\n"
+        f"CHANGE 1 — REMOVE ALL COLORED HIGHLIGHTS: her hair must become COMPLETELY ONE single natural color "
+        f"with ABSOLUTELY NO colored highlight strands. Erase every pink/blue/green/red/colored extension "
+        f"strand 100% — leave NO trace, streak or tint of any unnatural color anywhere. Every strand from "
+        f"roots to tips is her ONE natural base color (the same natural hair color she already has — if "
+        f"blonde keep blonde, if dark brown keep dark brown). The before hair must look like she is NOT "
+        f"wearing any colored extensions at all — just plain natural hair. This is mandatory.\n"
+        f"CHANGE 2 — RELAXED POSE: change her pose to a simple, relaxed, natural standing pose facing the "
+        f"camera, with both arms resting naturally straight down at her sides (NOT clasped in front, NOT "
+        f"raised, NOT touching her hair). A calm, plain catalog 'before' posture. "
         f"{_clothing_rule(clothing_en)}"
-        f"Keep the hairstyle, hair length, hair texture from the first image. "
-        f"Photorealistic, natural, sharp. Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
+        f"Expression: {_EXPR['gentle']} — replace any big open smile with this calm closed-mouth look. Her "
+        f"head and face turned forward, aligned with her body. "
+        f"Keep the same background as the original photo. "
+        f"Photorealistic, high-end editorial fashion photo, natural, sharp. "
+        f"Square 1:1 framing. EXACTLY ONE person, clean single portrait. "
         f"Do NOT add borders, panels or a side-by-side/collage in the output."
     )
 
