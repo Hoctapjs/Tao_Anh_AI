@@ -349,7 +349,7 @@ _GEN_MAP = {"Nữ": "woman", "Nam": "man"}
 
 _EXPR = {
     "confident": "a happy, bright, warm and confident smile, a lively and self-assured expression",
-    "gentle":    "a soft, gentle, calm expression with only a SUBTLE slight closed-lip smile — relaxed and serene; definitely NOT a big, bright, wide or open happy smile (even if the source image shows a big bright smile, here she only has a faint gentle smile)",
+    "gentle":    "a calm, gentle CLOSED-MOUTH expression — lips together, mouth fully closed, absolutely NO teeth showing, only the faintest hint of a closed-lip smile; NOT a light smile, NOT an open smile, NOT a bright happy smile (even if the source image shows a big bright open smile, here her mouth stays closed with teeth hidden)",
     "neutral":   "a relaxed natural expression",
 }
 
