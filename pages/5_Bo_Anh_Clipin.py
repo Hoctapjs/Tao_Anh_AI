@@ -9,7 +9,7 @@ from utils import (
     color_name_from_filename, extract_dominant_color,
     run_nano_multi, run_nano_banana, run_model, run_flux2,
     build_clipin_faceswap, build_nano_highlight_prompt,
-    build_clipin_before, build_clipin_lifestyle_from_after,
+    build_clipin_before, build_clipin_lifestyle_from_after, build_clipin_studio,
     render_sidebar, run_with_retry,
 )
 
@@ -78,6 +78,7 @@ def render_stage_mode():
         "2 · Recolor lọn → ảnh After",
         "3 · Ảnh Before (tóc tự nhiên)",
         "4 · Ảnh Lifestyle (tạo dáng)",
+        "5 · Ảnh Studio (đổi dáng, giữ lọn + nền)",
     ])
 
     # ---- GĐ 1: Đổi gương mặt ----
@@ -148,7 +149,7 @@ def render_stage_mode():
                 _stage_download("before.png", out)
 
     # ---- GĐ 4: Lifestyle ----
-    else:
+    elif stage.startswith("4"):
         st.caption("Đầu vào: ảnh After (đã có lọn màu) + swatch (lấy tên/màu lọn). "
                    "Đầu ra: ảnh Lifestyle đổi dáng, giữ mặt + lọn.")
         after_img = st.file_uploader("Ảnh After (đã có lọn màu)", type=UP_TYPES, key="s4_after")
@@ -168,6 +169,29 @@ def render_stage_mode():
                                        "1:1", hr))
             if out:
                 _stage_download("lifestyle.png", out)
+
+    # ---- GĐ 5: Studio ----
+    else:
+        st.caption("Đầu vào: ảnh After (người + lọn + nền) + template dáng + swatch. "
+                   "Đầu ra: ảnh Studio đổi dáng, GIỮ lọn màu + GIỮ phông nền của After.")
+        after_img = st.file_uploader("Ảnh After (người + lọn + nền)", type=UP_TYPES, key="s5_after")
+        pose_tmpl = st.file_uploader("Template dáng (chỉ lấy tư thế)", type=UP_TYPES, key="s5_pose")
+        sw        = st.file_uploader("Swatch màu (để giữ đúng màu lọn)", type=UP_TYPES, key="s5_sw")
+        hr        = st.toggle("Xuất 4K siêu nét", value=False, key="s5_hr")
+        if st.button("🚀 Tạo ảnh Studio", type="primary", use_container_width=True):
+            if not after_img or not pose_tmpl or not sw:
+                st.error("Cần ảnh After + template dáng + swatch."); st.stop()
+            _need_token()
+            s_bytes = sw.getvalue()
+            color_name = color_name_from_filename(sw.name)
+            hex_color, _, _ = extract_dominant_color(s_bytes)
+            out = _stage_status(
+                "Ảnh Studio",
+                lambda: run_nano_multi([after_img.getvalue(), pose_tmpl.getvalue()],
+                                       build_clipin_studio(color_name, hex_color),
+                                       "1:1", hr))
+            if out:
+                _stage_download("studio.png", out)
 
 
 if run_mode == "Chạy từng giai đoạn":

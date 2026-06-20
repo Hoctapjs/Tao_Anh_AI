@@ -464,6 +464,32 @@ def build_clipin_before(clothing_en="", match_identity=True):
     )
 
 
+def build_clipin_studio(color_name, hex_color):
+    """Ảnh Studio: ảnh 1 = After (người + lọn + nền), ảnh 2 = template dáng.
+    Re-pose người After theo dáng template, GIỮ lọn màu + GIỮ phông nền của After."""
+    return (
+        f"TASK: take the EXACT woman shown in the FIRST image and simply re-pose her into a new body pose. "
+        f"The output is a clean studio photo of the FIRST image's woman — her exact face, exact skin tone, "
+        f"exact natural hair color, exact outfit. Keep her 100% identical to the first image in every way "
+        f"EXCEPT her body pose. "
+        f"The SECOND image is NOT a person — treat it as a pure POSE DIAGRAM / mannequin showing only the "
+        f"body posture, turn angle and arm position to copy. The woman in the second image is a COMPLETELY "
+        f"DIFFERENT, unrelated person who must NOT appear: do NOT copy her face, skin tone, hair color, "
+        f"hairstyle or clothing. Borrow ONLY the body pose from the second image. "
+        f"CRUCIAL — KEEP the colored clip-in highlight strands: the woman still has the EXACT same "
+        f"{color_name} (hex {hex_color}) highlight strands as in the first image — same color, same position, "
+        f"same amount, same thin look. Do NOT remove, fade, thicken or change the colored highlights; they "
+        f"stay clearly visible exactly as in the first image. "
+        f"Keep her natural hair color, hair length, hair texture and outfit exactly as the first image. "
+        f"BACKGROUND: keep the SAME studio background as the first image (same color, same lighting, same "
+        f"plain studio backdrop) — do NOT change the background or setting. "
+        f"Give her a relaxed, natural, confident expression. "
+        f"Photorealistic, high-end studio product photo, sharp. "
+        f"Square 1:1 framing. EXACTLY ONE person, clean single portrait, the same woman as the first image. "
+        f"Do NOT add borders, panels, swatch or a side-by-side/collage in the output."
+    )
+
+
 def build_clipin_lifestyle_from_after(color_name, hex_color):
     """Ảnh Lifestyle: từ ảnh After -> đổi dáng tạo kiểu, giữ nguyên mặt + lọn màu."""
     return (
