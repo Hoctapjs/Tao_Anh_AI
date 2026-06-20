@@ -270,6 +270,21 @@ def run_nano_banana(model_bytes, swatch_bytes, prompt, hi_res=False):
     return output_to_bytes(replicate.run(model, input=inp))
 
 
+def run_nano2_edit(images_bytes, prompt, resolution="2K", aspect_ratio=None):
+    """Chỉnh sửa ảnh bằng nano-banana-2: nhận list ảnh + prompt.
+    resolution: 1K/2K/4K. aspect_ratio: None = giữ theo ảnh gốc."""
+    inp = {
+        "prompt": prompt,
+        "image_input": [io.BytesIO(b) for b in images_bytes],
+        "output_format": "png",
+    }
+    if resolution:
+        inp["resolution"] = resolution
+    if aspect_ratio:
+        inp["aspect_ratio"] = aspect_ratio
+    return output_to_bytes(replicate.run(MODEL_NANO2, input=inp))
+
+
 def run_flux2(images_bytes, prompt, aspect_ratio="match_input_image"):
     """FLUX 2 Pro: img2img, nhận list ảnh qua input_images (tối đa 8).
     aspect_ratio mặc định bám theo ảnh đầu vào."""

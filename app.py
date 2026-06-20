@@ -10,5 +10,6 @@ pg = st.navigation([
     st.Page("pages/5_Bo_Anh_Clipin.py",  title="Bộ ảnh Clip-In",  icon="📸"),
     st.Page("pages/4_Bang_Hieu.py",      title="Tạo bảng hiệu",   icon="🪧"),
     st.Page("pages/6_Upscale.py",        title="Upscale ảnh",      icon="🔍"),
+    st.Page("pages/7_Chinh_Sua_Anh.py",  title="Chỉnh sửa ảnh",    icon="🎨"),
 ])
 pg.run()
