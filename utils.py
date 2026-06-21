@@ -444,7 +444,10 @@ def build_clipin_before(clothing_en="", match_identity=True):
     return (
         f"Edit THIS photo to create a BEFORE product photo of the SAME woman. Keep her exact face, facial "
         f"features, skin tone, natural hair color, hair length, hair texture and her outfit/clothing — she "
-        f"stays unmistakably the same person. Make these changes:\n"
+        f"stays unmistakably the same person. Also keep the EXACT same hairstyle as the original: the same "
+        f"middle/side parting, the same hairline, and the same face-framing strands falling beside her face "
+        f"and temples — do NOT re-part, re-comb, restyle, smooth back or move the hair around her face and "
+        f"temples; that area must look identical to the original. Make these changes:\n"
         f"CHANGE 1 — REMOVE ALL HIGHLIGHTS AND MAKE THE HAIR ONE EVEN NATURAL COLOR: her hair must become "
         f"ONE single even natural color from roots to tips. Remove every colored highlight strand "
         f"(pink/blue/green/red) 100%, AND ALSO remove any ombre, balayage, dip-dye, gradient, lightened or "
