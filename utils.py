@@ -602,6 +602,97 @@ def run_signboard_model(prompt, aspect_ratio="4:5"):
     return output_to_bytes(replicate.run(MODEL_NANO2, input=inp))
 
 
+# ====== LÀM ẢNH CHÂN THẬT (Photorealism Enhancer) ======
+# Các nhóm "Photorealism Modifiers" -> mô tả tiếng Anh ghép vào prompt.
+REALISM_CAMERA = {
+    "Tự động (chân dung)": "shot on a Sony A7R IV with an 85mm f/1.8 lens, ISO 400, "
+                           "shallow depth of field, natural background bokeh",
+    "Canon EOS R5":        "shot on a Canon EOS R5 with a 50mm f/1.4 lens, ISO 200",
+    "Fujifilm XT4":        "shot on a Fujifilm XT4, Fujifilm film simulation, 35mm lens, ISO 400",
+    "Sony A7R IV (85mm)":  "shot on a Sony A7R IV with an 85mm f/1.8 lens, ISO 400, "
+                           "creamy shallow depth of field",
+    "Phim 35mm":           "shot on a 35mm analog film camera, Kodak Portra film stock, "
+                           "soft organic colors",
+}
+
+REALISM_LIGHTING = {
+    "Giữ nguyên ánh sáng": "",
+    "Softbox studio":      "soft diffused softbox studio lighting, gentle natural falloff",
+    "Giờ vàng":            "warm golden hour sunlight, soft directional glow",
+    "Ánh sáng bên":        "soft side lighting with gentle natural shadows for depth",
+    "Ngược sáng (viền tóc)": "soft backlight creating a natural rim light along the hair and shoulders",
+}
+
+
+def build_realism_prompt(camera_en="", lighting_en="", skin_texture=True,
+                         film_grain=True, lens_artifacts=False, intensity="Vừa"):
+    """Prompt làm ảnh AI trông như ảnh chụp thật, GIỮ NGUYÊN mọi nội dung gốc.
+    Chỉ thêm các 'imperfection' và đặc tính quang học của ảnh chụp thật."""
+
+    if intensity == "Nhẹ":
+        amount = ("Apply these photographic qualities SUBTLY and lightly — the change must be "
+                  "barely perceptible, just enough to remove the artificial 'AI render' look. ")
+        grain_amt = "very fine, subtle film grain"
+    elif intensity == "Mạnh":
+        amount = ("Apply these photographic qualities STRONGLY so the result is unmistakably a "
+                  "real photograph, while still keeping the subject identical. ")
+        grain_amt = "visible analog film grain and natural sensor noise"
+    else:  # Vừa
+        amount = ("Apply these photographic qualities at a natural, balanced level. ")
+        grain_amt = "fine, natural film grain"
+
+    parts = [
+        "Make THIS photo look like a real, unedited photograph taken with a real camera — "
+        "convincingly photorealistic to the human eye, not AI-generated, not a 3D render, "
+        "not an illustration, not over-smoothed.",
+        # KHÓA NỘI DUNG GỐC
+        "ABSOLUTELY PRESERVE EVERYTHING in the original image: the exact same person and identity, "
+        "the exact same face and facial features, the exact same hair color, hairstyle and every "
+        "highlight strand, the exact same pose, expression, outfit, colors, framing, crop, zoom and "
+        "background. Do NOT change, add, remove, move or restyle anything. Do NOT alter the hair color "
+        "or any colors. This is purely a photographic realism pass, NOT a content edit.",
+        amount,
+    ]
+
+    # Nhóm 2 — Imperfection (chìa khóa của sự thật)
+    if skin_texture:
+        parts.append(
+            "Restore natural human skin texture: visible fine skin pores, subtle natural skin "
+            "imperfections, fine vellus hair and realistic micro-detail. Remove any plastic, waxy, "
+            "over-smoothed, airbrushed or CGI-like quality from the skin while keeping the same skin tone."
+        )
+    if film_grain:
+        parts.append(
+            f"Add {grain_amt} evenly across the whole image for an authentic analog photographic feel "
+            f"and material depth."
+        )
+    if lens_artifacts:
+        parts.append(
+            "Add the subtle optical imperfections of a real lens: a very slight chromatic aberration "
+            "at high-contrast edges and gentle, natural lens falloff — kept delicate, never distracting."
+        )
+
+    # Nhóm 1 — Camera & Lens
+    if camera_en:
+        parts.append(camera_en + ".")
+    # Nhóm 3 — Ánh sáng
+    if lighting_en:
+        parts.append(lighting_en + ".")
+
+    # Nhóm 4 — High-fidelity descriptors
+    parts.append(
+        "Natural realistic color grading, true-to-life tones, sharp focus on the eyes, natural "
+        "micro-contrast, raw photo look, hyper-realistic, highly detailed."
+    )
+
+    # Khóa bố cục
+    parts.append(
+        "Keep the EXACT same framing, crop and aspect ratio as the input. Output EXACTLY ONE photo of "
+        "the same single person — no collage, no split-screen, no borders, no extra panels, no second copy."
+    )
+    return " ".join(parts)
+
+
 def run_upscale_model(image_bytes, scale=4, face_enhance=False):
     """Upscale ảnh bằng Real-ESRGAN. scale: 1-10 (default 4x). face_enhance: GFPGAN."""
     inp = {
